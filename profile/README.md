@@ -8,11 +8,14 @@ Tools and infrastructure for converting clinical data from FHIR to the OMOP Comm
 |---|---|
 | [matchbox](https://github.com/croeder-fhir-to-omop/matchbox) | FHIR validation and mapping server |
 | [matchbox_docker](https://github.com/croeder-fhir-to-omop/matchbox_docker) | Docker configuration and IGs for running matchbox |
-| [matchbox_scripts](https://github.com/croeder-fhir-to-omop/matchbox_scripts) | Shell scripts and sample FHIR resources for exercising the OMOP IG maps |
-| [jupyter_docker](https://github.com/croeder-fhir-to-omop/jupyter_docker) | Jupyter notebook environment wired to matchbox for interactive FHIR→OMOP exploration |
+| [matchbox_scripts](https://github.com/croeder-fhir-to-omop/matchbox_scripts) | `transforms.py` (FHIR→OMOP via matchbox), `load_duckdb.py` (ETL into OMOP CDM 5.4), and sample FHIR fixtures |
+| [jupyter_docker](https://github.com/croeder-fhir-to-omop/jupyter_docker) | Jupyter notebook environment for interactive FHIR→OMOP exploration |
+| [dqd_docker](https://github.com/croeder-fhir-to-omop/dqd_docker) | Runs the ETL then serves the OHDSI Data Quality Dashboard against the resulting OMOP CDM |
 
 ## How it works
 
-1. **matchbox** runs a FHIR server with the OMOP IG loaded, exposing a `$transform` operation for each StructureMap
-2. **matchbox_scripts** provides sample FHIR resources (Condition, Patient, Procedure, Immunization, etc.) and scripts to call `$transform`
-3. **jupyter_docker** launches a Jupyter environment connected to matchbox, with notebooks that demonstrate and test all 11 StructureMaps in the IG
+1. **matchbox** runs a FHIR server with the OMOP IG loaded, exposing a `$transform` operation for each of the 11 StructureMaps
+2. **matchbox_scripts/transforms.py** calls `$transform` for each FHIR resource type and returns OMOP-shaped dicts
+3. **matchbox_scripts/load_duckdb.py** runs all transforms against the sample fixtures and writes results into a DuckDB OMOP CDM 5.4 database
+4. **jupyter_docker** imports `transforms.py` for interactive exploration — same code, human in the loop
+5. **dqd_docker** runs `load_duckdb.py` automatically on startup, then serves the OHDSI Data Quality Dashboard on port 3838
