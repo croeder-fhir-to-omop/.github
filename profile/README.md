@@ -21,6 +21,8 @@ All compose files use `..` as their build context, so repos must be cloned **sid
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) (or Docker + Docker Compose v2)
 - Git
 
+**Windows:** Option A (dqd_docker) works from PowerShell. Option B (jupyter_docker) uses a `${HOME}` path in its volume mount that requires a WSL2 terminal — run all commands from WSL2 for consistency. Docker Desktop's default WSL2 backend handles the rest automatically.
+
 ### Clone
 
 ```bash
