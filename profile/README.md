@@ -61,7 +61,7 @@ Fixtures are FHIR resource JSON files. There are two cases depending on whether 
 
 **Supported resource types** (Condition, Patient, Procedure, AllergyIntolerance, Encounter, Immunization, MedicationStatement, Observation, and vital-sign/weight Observations) — just add a JSON file with a matching name pattern (e.g. `condition_myfix.json`, `medication_warfarin.json`) to `matchbox_scripts/`:
 
-- *Option B / Jupyter*: Drop the file into `matchbox_scripts/` on your host — it appears immediately inside the container (the directory is a live bind-mount). You can also upload it via the Jupyter file browser, or skip the file entirely and pass a Python dict directly to `transform_*()` in a notebook cell. No restart needed.
+- *Option B / Jupyter*: Drop the file into `matchbox_scripts/` on your host — it appears immediately inside the container (the directory is a live bind-mount). You can also upload it via the Jupyter file browser, or skip the file entirely and pass a Python dict directly to `transform_*()` in a notebook cell. No restart needed. To persist the fixture for others, commit and push it to `matchbox_scripts`.
 - *Option A / automated ETL*: Add the file to `matchbox_scripts/`, then rebuild and restart: `docker compose -f dqd_docker/docker-compose.yml up --build`. The fixtures are copied into the image at build time, so a rebuild is required.
 
 **New resource types** (e.g. Device, Death, or any FHIR resource not listed above) — requires code changes:
