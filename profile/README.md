@@ -55,25 +55,41 @@ docker compose -f jupyter_docker/docker-compose.yml up
 
 Open http://localhost:8888 and navigate to `matchbox_scripts/notebooks/matchbox_demo.ipynb`.
 
-### Adding your own FHIR fixtures
+### Adding FHIR fixtures
 
-Fixtures are FHIR resource JSON files. There are two cases depending on whether the resource type is already supported.
+Fixtures are FHIR resource JSON files stored in `matchbox_scripts/`.
 
-**Supported resource types** (Condition, Patient, Procedure, AllergyIntolerance, Encounter, Immunization, MedicationStatement, Observation, and vital-sign/weight Observations) — just add a JSON file with a matching name pattern (e.g. `condition_myfix.json`, `medication_warfarin.json`) to `matchbox_scripts/`:
+#### Existing resource types
 
-- *Option B / Jupyter*: Drop the file into `matchbox_scripts/` on your host — it appears immediately inside the container (the directory is a live bind-mount). You can also upload it via the Jupyter file browser, or skip the file entirely and pass a Python dict directly to `transform_*()` in a notebook cell. No restart needed. To persist the fixture for others, commit and push it to `matchbox_scripts`.
-- *Option A / automated ETL*: Add the file to `matchbox_scripts/`, then rebuild and restart: `docker compose -f dqd_docker/docker-compose.yml up --build`. The fixtures are copied into the image at build time, so a rebuild is required.
+Supported types: Condition, Patient, Procedure, AllergyIntolerance, Encounter, Immunization, MedicationStatement, Observation, and vital-sign/weight Observations. Add a JSON file whose name matches an existing glob pattern (e.g. `condition_diabetes.json`, `medication_warfarin.json`) — no code changes needed.
 
-**Replacing matchbox with a different conversion engine** — `transforms.py` is the only file that knows about matchbox. Every `transform_*()` function follows the same contract: it takes a FHIR resource dict and returns either `None` to suppress the resource, or an OMOP-shaped dict that is itself in FHIR resource form — a `resourceType` field (e.g. `"ConditionOccurrence"`) plus OMOP column names as the remaining keys. That `resourceType` is how `load_duckdb.py` looks up the correct column list in `omop_to_csv.COLUMNS` and knows which fields to extract before inserting into DuckDB. To swap in a different engine, rewrite `transforms.py` — replace the `_call()` helper to hit a different HTTP endpoint, rewrite individual functions to convert locally, or replace the file entirely. As long as the return value keeps this FHIR-envelope shape, nothing else in the pipeline needs to change.
+- **Option B / Jupyter**: Drop the file into `matchbox_scripts/` on your host — it appears immediately inside the container (the directory is a live bind-mount). You can also upload it via the Jupyter file browser, or skip the file entirely and pass a Python dict directly to `transform_*()` in a notebook cell. No restart needed. To persist the fixture for others, commit and push it to `matchbox_scripts`.
+- **Option A / automated ETL**: Add the file to `matchbox_scripts/`, then rebuild and restart: `docker compose -f dqd_docker/docker-compose.yml up --build`. Fixtures are copied into the image at build time, so a rebuild is required.
 
-If a replacement engine produced plain CSV row strings instead, more would need to change: the `resourceType` self-description disappears, so `load_duckdb.py` would have to key off the table name already present in each `FIXTURE_TRANSFORMS` entry rather than the return value; `omop_to_csv.COLUMNS` (currently keyed by PascalCase resourceType like `"ConditionOccurrence"`) would need rekeying by snake_case table name (e.g. `"condition_occurrence"`); and the CSV string would need to be parsed into a column→value dict before the existing `insert()` function could use it.
+#### New resource types
 
-**New resource types** (e.g. Device, Death, or any FHIR resource not listed above) — requires code changes:
+For resource types not listed above (e.g. Device, Death):
 
 1. Add the FHIR JSON fixture to `matchbox_scripts/`
 2. Add a `transform_<type>()` function to `matchbox_scripts/transforms.py`
 3. Add a row to `FIXTURE_TRANSFORMS` in `matchbox_scripts/load_duckdb.py` (glob pattern, transform function, OMOP table, StructureMap name)
 4. Commit and push, then rebuild for Option A
+
+### Extending or replacing the conversion engine
+
+#### Replacing matchbox
+
+`transforms.py` is the only file that knows about matchbox. Every `transform_*()` function takes a FHIR resource dict and returns either `None` (to suppress the resource) or an OMOP-shaped dict that is itself in FHIR resource form: a `resourceType` field (e.g. `"ConditionOccurrence"`) plus OMOP column names as the remaining keys. That `resourceType` is how `load_duckdb.py` looks up the correct column list in `omop_to_csv.COLUMNS` and knows which fields to extract before inserting into DuckDB.
+
+To swap in a different engine, rewrite `transforms.py` — replace the `_call()` helper to hit a different HTTP endpoint, rewrite individual functions to convert locally, or replace the file entirely. As long as the return value keeps this FHIR-envelope shape, nothing else in the pipeline needs to change.
+
+#### If your engine produces CSV
+
+If a replacement engine produces plain CSV row strings instead of FHIR-shaped dicts, three things break and need updating:
+
+- **`load_duckdb.py`**: the `resourceType` dispatch disappears; key off the table name already present in each `FIXTURE_TRANSFORMS` entry instead
+- **`omop_to_csv.COLUMNS`**: currently keyed by PascalCase resourceType (e.g. `"ConditionOccurrence"`); would need rekeying by snake_case table name (e.g. `"condition_occurrence"`)
+- **Parsing**: the CSV string would need to be parsed into a column→value dict before the existing `insert()` function can use it
 
 ### Stopping
 
