@@ -64,6 +64,8 @@ Fixtures are FHIR resource JSON files. There are two cases depending on whether 
 - *Option B / Jupyter*: Drop the file into `matchbox_scripts/` on your host — it appears immediately inside the container (the directory is a live bind-mount). You can also upload it via the Jupyter file browser, or skip the file entirely and pass a Python dict directly to `transform_*()` in a notebook cell. No restart needed. To persist the fixture for others, commit and push it to `matchbox_scripts`.
 - *Option A / automated ETL*: Add the file to `matchbox_scripts/`, then rebuild and restart: `docker compose -f dqd_docker/docker-compose.yml up --build`. The fixtures are copied into the image at build time, so a rebuild is required.
 
+**Replacing matchbox with a different conversion engine** — `transforms.py` is the only file that knows about matchbox. Every `transform_*()` function follows the same contract: it takes a FHIR resource dict and returns either an OMOP-shaped dict (with a `resourceType` key matching the entries in `omop_to_csv.py`) or `None` to suppress the resource. To swap in a different engine, rewrite `transforms.py` — replace the `_call()` helper to hit a different HTTP endpoint, rewrite individual functions to convert locally, or replace the file entirely. Nothing else in the pipeline (`load_duckdb.py`, the notebooks) needs to change.
+
 **New resource types** (e.g. Device, Death, or any FHIR resource not listed above) — requires code changes:
 
 1. Add the FHIR JSON fixture to `matchbox_scripts/`
