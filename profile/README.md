@@ -24,6 +24,8 @@ All images are published to Docker Hub. No repo clones are needed to run the pip
 
 Runs matchbox, transforms all sample FHIR fixtures into OMOP CDM 5.4 (DuckDB), executes OHDSI Data Quality Dashboard checks, and serves two dashboards.
 
+#### Starting
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/croeder-fhir-to-omop/dqd_docker/main/docker-compose.yml | docker compose -f - up
 ```
@@ -42,9 +44,18 @@ docker compose -f dqd_docker/docker-compose.yml up
 
 On first run matchbox loads the OMOP IG (~1 min). Subsequent runs use the cached volume.
 
+#### Stopping
+
+```bash
+docker compose -f dqd_docker/docker-compose.yml down      # keep data volumes
+docker compose -f dqd_docker/docker-compose.yml down -v   # also remove volumes (fresh start)
+```
+
 ### Option B — Interactive Jupyter Notebooks
 
 Starts matchbox and a Jupyter notebook server with `transforms.py` pre-installed for hands-on FHIR→OMOP exploration.
+
+#### Starting
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/croeder-fhir-to-omop/jupyter_docker/main/docker-compose.yml | docker compose -f - up
@@ -59,11 +70,11 @@ docker compose -f jupyter_docker/docker-compose.yml up
 
 Open http://localhost:8888. Sample notebooks are in the `notebooks/` directory.
 
-### Stopping
+#### Stopping
 
 ```bash
-docker compose -f dqd_docker/docker-compose.yml down       # keep data volumes
-docker compose -f dqd_docker/docker-compose.yml down -v    # also remove volumes (fresh start)
+docker compose -f jupyter_docker/docker-compose.yml down      # keep data volumes
+docker compose -f jupyter_docker/docker-compose.yml down -v   # also remove volumes (fresh start)
 ```
 
 ## Developing matchbox_scripts
