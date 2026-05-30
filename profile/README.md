@@ -90,7 +90,12 @@ git clone https://github.com/croeder-fhir-to-omop/jupyter_docker
 docker compose -f jupyter_docker/docker-compose.yml up
 ```
 
-Open http://localhost:8888. Sample notebooks are in the `notebooks/` directory.
+Open http://localhost:8888. Inside Jupyter you'll find two folders:
+
+| Folder | Contents |
+|---|---|
+| `examples/` | Demo notebooks baked into the image — use as reference; changes don't persist |
+| `work/` | Your working directory — files saved here persist to `./notebooks/` on the host |
 
 #### Stopping
 
