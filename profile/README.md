@@ -28,8 +28,14 @@ Runs matchbox, transforms all sample FHIR fixtures into OMOP CDM 5.4 (DuckDB), e
 
 #### Starting
 
+macOS / Linux / Git Bash:
 ```bash
 curl -fsSL https://raw.githubusercontent.com/croeder-fhir-to-omop/dqd_docker/main/docker-compose.yml | docker compose -f - up
+```
+
+PowerShell (Windows 10/11 — note `curl.exe`, not `curl`):
+```powershell
+curl.exe -fsSL https://raw.githubusercontent.com/croeder-fhir-to-omop/dqd_docker/main/docker-compose.yml | docker compose -f - up
 ```
 
 Or clone just the one compose file you need:
@@ -59,8 +65,14 @@ Starts matchbox and a Jupyter notebook server with `transforms.py` pre-installed
 
 #### Starting
 
+macOS / Linux / Git Bash:
 ```bash
 curl -fsSL https://raw.githubusercontent.com/croeder-fhir-to-omop/jupyter_docker/main/docker-compose.yml | docker compose -f - up
+```
+
+PowerShell (Windows 10/11 — note `curl.exe`, not `curl`):
+```powershell
+curl.exe -fsSL https://raw.githubusercontent.com/croeder-fhir-to-omop/jupyter_docker/main/docker-compose.yml | docker compose -f - up
 ```
 
 Or clone just the one compose file you need:
