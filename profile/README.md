@@ -47,6 +47,12 @@ On first run matchbox loads the OMOP IG (~1 min). Subsequent runs use the cached
 Starts matchbox and a Jupyter notebook server with `transforms.py` pre-installed for hands-on FHIR→OMOP exploration.
 
 ```bash
+curl -fsSL https://raw.githubusercontent.com/croeder-fhir-to-omop/jupyter_docker/main/docker-compose.yml | docker compose -f - up
+```
+
+Or clone just the one compose file you need:
+
+```bash
 git clone https://github.com/croeder-fhir-to-omop/jupyter_docker
 docker compose -f jupyter_docker/docker-compose.yml up
 ```
