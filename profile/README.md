@@ -20,7 +20,7 @@ All images are published to Docker Hub. No repo clones are needed to run the pip
 
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) (or Docker + Docker Compose v2)
 
-> **Note:** Docker Hub shows a "Run in Docker Desktop" button on each image page. Avoid it — it starts only that one container in isolation, leaving matchbox unreachable. The pipeline requires two services running together with shared networking, which only the compose file provides. Use the `curl` commands below instead.
+> **Note:** Docker Hub shows a "Run in Docker Desktop" button on each image page (`croeder/jupyter`, `croeder/dqd`, `croeder/matchbox`). Avoid it — it starts only that one container in isolation, leaving the other services unreachable. The pipeline requires two services running together with shared networking, which only the compose file provides. Use the `curl` commands below instead.
 
 ### Option A — Automated ETL + Data Quality Dashboard
 
