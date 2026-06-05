@@ -1,6 +1,8 @@
 # FHIR to OMOP
 
 Tools and infrastructure for converting clinical data from FHIR to the OMOP Common Data Model using the [HL7 FHIR-to-OMOP Implementation Guide](https://hl7.org/fhir/uv/omop/).
+## DISCLAIMER
+The IG includes many precautions for dealing with PII in the data. This code makes no guarantee to do so. Do not use it with PII or PHI.
 
 ## Repositories
 
