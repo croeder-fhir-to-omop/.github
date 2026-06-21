@@ -18,7 +18,7 @@ The IG includes many precautions for dealing with PII in the data. This code mak
 
 ## FHIR version
 
-This setup tests the IG against **FHIR R5** data. Vocabulary lookups (both enchilada and echidna) are called via R4 endpoints, as the terminology service layer operates at R4. The code assumes R5; the IG itself determines the actual mapping behavior.
+This setup tests the IG against **FHIR R5** data. The tests here assume R5. Vocabulary lookups (both enchilada and echidna) are called via R4 endpoints, as the terminology service layer operates at R4.
 
 A profiles-based compose setup (`dqd_docker/docker-compose.profiles.yml`) exists for running multiple stacks in parallel and switching between FHIR R4 and R5 or between IG versions — see the `dqd_docker` repo for details.
 
