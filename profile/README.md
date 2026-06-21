@@ -16,6 +16,12 @@ The IG includes many precautions for dealing with PII in the data. This code mak
 | [dqd_docker](https://github.com/croeder-fhir-to-omop/dqd_docker) | Runs the ETL then serves the OHDSI Data Quality Dashboard against the resulting OMOP CDM |
 | [enchilada](https://github.com/croeder/enchilada) | Local OMOP-backed FHIR terminology server |
 
+## FHIR version
+
+This setup tests the IG against **FHIR R5** data. Vocabulary lookups (both enchilada and echidna) are called via R4 endpoints, as the terminology service layer operates at R4. The code assumes R5; the IG itself determines the actual mapping behavior.
+
+A profiles-based compose setup (`dqd_docker/docker-compose.profiles.yml`) exists for running multiple stacks in parallel and switching between FHIR R4 and R5 or between IG versions — see the `dqd_docker` repo for details.
+
 ## Running
 
 All images are published to Docker Hub. No repo clones are needed to run the pipeline.
