@@ -93,7 +93,13 @@ On first run, enchilada loads the vocabulary CSVs (~1–2 min) and matchbox load
 
 #### Terminology server
 
-By default matchbox uses **enchilada** — the local terminology container in `docker-compose.yml`. To switch to the public [echidna.fhir.org](https://echidna.fhir.org) instead:
+Two terminology servers are supported:
+
+**enchilada** — a local OMOP-backed terminology server included in `docker-compose.yml`. Requires `CONCEPT.csv` and `CONCEPT_RELATIONSHIP.csv` from Athena (see above). This is the default.
+
+**echidna** — the public [echidna.fhir.org](https://echidna.fhir.org) terminology service. Available free of charge with rate limits; no local vocabulary files required. API key authentication for higher limits is not currently supported in the matchbox txServer code path.
+
+To use echidna, set the terminology server URL when starting:
 
 ```bash
 MATCHBOX_FHIR_CONTEXT_TXSERVER=https://echidna.fhir.org/r4 docker compose up
@@ -104,7 +110,7 @@ Or add a `.env` file alongside your compose file:
 MATCHBOX_FHIR_CONTEXT_TXSERVER=https://echidna.fhir.org/r4
 ```
 
-enchilada still starts when using echidna (it is a healthcheck dependency), but matchbox routes all terminology lookups to echidna instead. echidna requires no local vocabulary files.
+When using echidna, enchilada still starts (it is a healthcheck dependency) but matchbox routes all terminology lookups to echidna.
 
 #### Stopping
 
