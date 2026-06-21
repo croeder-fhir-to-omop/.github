@@ -183,61 +183,84 @@ For resource types not listed above (e.g. Device, Death):
 4. Commit and push, then rebuild for Option A
 
 
-### Local Vocabulary and Local IG Copy
-  Starting from the published image
+### Working with the Implementation Guide
 
-  The published croeder/matchbox:latest image has the IG baked in at /igs/ and a base config at /defaults/application.yaml. The entrypoint loads configs
-  in order:
+The `croeder/matchbox:latest` image has `hl7.fhir.uv.omop#1.0.0` baked in. If you are working on the IG itself — editing StructureMaps or ConceptMaps in `fhir-omop-ig/` — you need to build a new IG package and get it into matchbox. There are two paths depending on whether you want a quick local test or a published image.
 
-  optional:file:/defaults/application.yaml → optional:file:/config/application.yaml
+#### Step 1 — Build the IG
 
-  So to override the IG or config without rebuilding, you use volume mounts.
+The IG is built with the [bonfhir ig-toolbox](https://github.com/bonfhir/ig-toolbox) Docker container. Clone `fhir-omop-ig` alongside your other repos, then:
 
-  Step 1 — Put your IG tgz in a local igs/ directory
-```
-  mkdir -p igs/
-  cp /path/to/hl7.fhir.uv.omop-1.1.0.tgz ./igs/
+```bash
+git clone https://github.com/croeder-fhir-to-omop/fhir-omop-ig
+cd fhir-omop-ig
+docker run --rm -v "$(pwd):/workspace" ghcr.io/bonfhir/ig-toolbox:latest build
 ```
 
-  Step 2 — Write a local config/application.yaml
+This produces a package tarball at `fhir-omop-ig/output/package.tgz`. Copy it into `matchbox_docker/igs/` with the versioned name matchbox expects:
+
+```bash
+cp fhir-omop-ig/output/package.tgz matchbox_docker/igs/hl7.fhir.uv.omop-<version>.tgz
 ```
 
-  hapi:
-    fhir:
-      implementationguides:
-        fhiromop:
-          name: hl7.fhir.uv.omop
-          version: 1.1.0
-          url: file:///igs/hl7.fhir.uv.omop-1.1.0.tgz
+#### Path A — Local run (no image rebuild)
 
-  matchbox:
-    fhir:
-      context:
-        igsPreloaded:
-          - hl7.fhir.uv.omop#1.1.0
+The published matchbox image loads configs in order:
+
+```
+/defaults/application.yaml  →  /config/application.yaml  (optional override)
 ```
 
-  Step 3 — Mount both in docker-compose.yml
+Mount your new IG package and a config override into the running container — no rebuild needed.
+
+**1. Write `config/application.yaml`** in your working directory:
+
+```yaml
+hapi:
+  fhir:
+    implementationguides:
+      fhiromop:
+        name: hl7.fhir.uv.omop
+        version: <version>
+        url: file:///igs/hl7.fhir.uv.omop-<version>.tgz
+
+matchbox:
+  fhir:
+    context:
+      igsPreloaded:
+        - hl7.fhir.uv.omop#<version>
 ```
 
-  services:
-    matchbox:
-      image: croeder/matchbox:latest
-      ports:
-        - "8080:8080"
-      volumes:
-        - matchbox-db:/database
-        - ./config:/config:ro      # your application.yaml overrides /defaults/
-        - ./igs:/igs:ro            # your IG tgz replaces or supplements the baked-in one
+**2. Add volume mounts** to your `docker-compose.yml` under the `matchbox` service:
 
-  volumes:
-    matchbox-db:
+```yaml
+volumes:
+  - matchbox-db:/database
+  - ./matchbox_docker/igs:/igs:ro
+  - ./config:/config:ro
 ```
 
-  The docker-compose.yml in matchbox_docker/ already has this shape — the ./config and ./igs mounts are the override mechanism. No image rebuild needed.
+**3. Start** (use `down -v` first to clear the cached H2 database so matchbox reloads the IG from scratch):
 
-  One caveat: if you're swapping to a different IG tgz, also delete the matchbox-db volume so matchbox re-loads from scratch (docker compose down -v),
-  otherwise it'll use the cached H2 state.
+```bash
+docker compose down -v
+docker compose up
+```
+
+#### Path B — Bake into the image and publish
+
+Clone `matchbox_docker` alongside your other repos, place your built IG package in `matchbox_docker/igs/`, then use the build script:
+
+```bash
+git clone https://github.com/croeder-fhir-to-omop/matchbox_docker
+git clone https://github.com/croeder-fhir-to-omop/matchbox_scripts
+
+# Build and publish the matchbox image
+cd matchbox_scripts
+python3 build.py ig mvn docker release
+```
+
+This builds the IG, builds the matchbox JAR, bakes a new `croeder/matchbox:latest` image, and pushes it to Docker Hub. Anyone who then does `docker compose pull` or runs the curl command fresh gets the updated IG.
 
 
 ### Extending or replacing the conversion engine
