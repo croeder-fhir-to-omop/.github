@@ -95,6 +95,12 @@ docker compose up
 | http://localhost:3838 | OHDSI Data Quality Dashboard |
 | http://localhost:8088 | ETL reports and unit test report |
 
+The port 8088 index links to three reports:
+
+- **ETL report — test files**: results from `matchbox_scripts/test_files_r5/`, a set of targeted FHIR fixtures designed to exercise specific StructureMap behaviors and edge cases
+- **ETL report — sample fixtures**: results from `matchbox_scripts/sample_fixtures_r5/`, a broader set of representative patient data
+- **Unit test report**: results from `matchbox_scripts/tests/test_r5_fml_transforms.py`, a pytest suite that calls matchbox's `$transform` endpoint directly and asserts specific OMOP field values — these are the primary correctness tests for the StructureMap implementations
+
 On first run, enchilada loads the vocabulary CSVs (~1–2 min) and matchbox loads the OMOP IG (~1 min). Both are cached in Docker volumes and skipped on subsequent starts.
 
 #### Terminology server
