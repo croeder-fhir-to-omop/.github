@@ -40,7 +40,18 @@ Runs enchilada (local terminology server), matchbox (FHIR→OMOP transforms), ET
 enchilada needs two vocabulary files from [Athena](https://athena.ohdsi.org):
 
 1. Go to https://athena.ohdsi.org and create a free account
-2. Click **Download** and select a vocabulary bundle (SNOMED, LOINC, RxNorm, ICD-10 are sufficient for the sample fixtures)
+2. Click **Download** and select a vocabulary bundle. The sample fixtures use these vocabularies:
+
+| Vocabulary | Athena name | Used for |
+|---|---|---|
+| SNOMED CT | SNOMED | Conditions, procedures, observations |
+| LOINC | LOINC | Lab results, vitals, blood pressure panels |
+| RxNorm | RxNorm | Medications |
+| ICD-10-CM | ICD10CM | Diagnoses |
+| CVX | CVX | Immunizations / vaccines |
+| UCUM | UCUM | Units of measure |
+| CDC Race & Ethnicity | Race | Patient race and ethnicity |
+
 3. Download and extract — you need `CONCEPT.csv` and `CONCEPT_RELATIONSHIP.csv`
 
 Place both files in your working directory before starting. They can be several GB; the download may take a few minutes.
