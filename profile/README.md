@@ -112,6 +112,8 @@ Two terminology servers are supported:
 
 **enchilada** — a local OMOP-backed terminology server included in `docker-compose.yml`. Requires `CONCEPT.csv` and `CONCEPT_RELATIONSHIP.csv` from Athena (see above). You can also supply supplemental concept files (`concept_extra.tsv`, `concept_relationship_extra.tsv`, `vocabulary_extra.tsv`) to add concept mappings for FHIR-specific code systems not present in Athena. These are optional; enchilada starts without them. This is the default.
 
+enchilada runs over HTTPS with a self-signed certificate. The matchbox image includes a combined JKS truststore (`/certs/combined.jks`) that merges the JVM's default CA bundle with enchilada's self-signed cert, so matchbox can reach both enchilada (self-signed) and public HTTPS services (CA-signed) without disabling certificate validation. The enchilada cert and the combined truststore are baked into the published images — no manual certificate setup is required.
+
 **echidna** — the public [echidna.fhir.org](https://echidna.fhir.org) terminology service. Available free of charge with rate limits; no local vocabulary files required. API key authentication for higher limits is not currently supported in the matchbox txServer code path. The free tier enforces approximately 60 requests per minute; set `TRANSFORM_SLEEP=1` in the dqd container environment to throttle ETL calls accordingly.
 
 To use echidna, set the terminology server URL when starting:
