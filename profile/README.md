@@ -194,24 +194,35 @@ All repos must be cloned **side by side into the same parent directory** when de
 
 **Windows:** Use a WSL2 terminal — the `${HOME}` path in the Jupyter dev overlay's volume mount requires it.
 
+### How the ETL pipeline drives fixtures through StructureMaps
+
+`load_duckdb.py` contains a dispatch table, `FIXTURE_TRANSFORMS`, where each row is:
+
+```
+(glob pattern,  transform function,   OMOP table,           StructureMap name)
+('condition_*.json', transform_condition, 'condition_occurrence', 'ConditionMap')
+```
+
+For each row, every fixture file whose name matches the glob is passed to the transform function, which calls matchbox's `$transform` endpoint using the named StructureMap. The result is an OMOP-shaped dict that `load_duckdb.py` inserts into the named OMOP table. There is one transform function per StructureMap — not one per OMOP table, since multiple StructureMaps can target the same table (for example, `MeasurementMap`, `SimpleVitalSignsMap`, `BloodPressurePanelMap`, `BloodPressureSystolicMap`, and `BloodPressureDiastolicMap` all write to `measurement`). A single fixture file can also match multiple rows — blood pressure files are intentionally passed through three separate StructureMaps to produce panel, systolic, and diastolic records.
+
 ### Adding FHIR fixtures
 
 Fixtures are FHIR resource JSON files stored in `matchbox_scripts/`.
 
-#### Existing resource types
+#### Existing StructureMaps
 
-Supported types: Condition, Patient, Procedure, AllergyIntolerance, Encounter, Immunization, MedicationStatement, Observation, and vital-sign/weight Observations. Add a JSON file whose name matches an existing glob pattern (e.g. `condition_diabetes.json`, `medication_warfarin.json`) — no code changes needed.
+Add a JSON file whose name matches an existing glob pattern (e.g. `condition_diabetes.json`, `observation_bp_standing.json`) — no code changes needed. The glob patterns are defined in `FIXTURE_TRANSFORMS` in `load_duckdb.py`.
 
 - **Option B / Jupyter**: Drop the file into `matchbox_scripts/` on your host — it appears immediately inside the container. No restart needed. Commit and push to persist for others.
 - **Option A / automated ETL**: Add the file to `matchbox_scripts/`, then rebuild: `docker compose -f dqd_docker/docker-compose.yml -f dqd_docker/docker-compose.dev.yml up --build`.
 
-#### New resource types
+#### New StructureMaps
 
-For resource types not listed above (e.g. Device, Death):
+To incorporate a new StructureMap (e.g. for Death or Device):
 
 1. Add the FHIR JSON fixture to `matchbox_scripts/`
-2. Add a `transform_<type>()` function to `matchbox_scripts/transforms.py`
-3. Add a row to `FIXTURE_TRANSFORMS` in `matchbox_scripts/load_duckdb.py` (glob pattern, transform function, OMOP table, StructureMap name)
+2. Add a `transform_<type>()` function to `matchbox_scripts/transforms.py` that calls `_call_r5(resource, 'YourMapName')`
+3. Add a row to `FIXTURE_TRANSFORMS_R5` in `matchbox_scripts/load_duckdb.py` with the glob pattern, transform function, target OMOP table, and StructureMap name
 4. Commit and push, then rebuild for Option A
 
 
