@@ -8,6 +8,7 @@ The IG includes many precautions for dealing with PII in the data. This code mak
 
 | Repo | Description |
 |---|---|
+| [fhir-omop-ig](https://github.com/croeder-fhir-to-omop/fhir-omop-ig) | HL7 FHIR-to-OMOP Implementation Guide — StructureMaps and ConceptMaps |
 | [matchbox](https://github.com/croeder-fhir-to-omop/matchbox) | FHIR validation and mapping server |
 | [matchbox_docker](https://github.com/croeder-fhir-to-omop/matchbox_docker) | Docker configuration for running matchbox |
 | [matchbox_scripts](https://github.com/croeder-fhir-to-omop/matchbox_scripts) | `transforms.py` (FHIR→OMOP via matchbox), `load_duckdb.py` (ETL into OMOP CDM 5.4), and sample FHIR fixtures |
@@ -27,9 +28,6 @@ All images are published to Docker Hub. No repo clones are needed to run the pip
   - Linux: Docker Engine + Docker Compose v2
 - **RAM**: 8GB minimum (16GB recommended). Docker Desktop's memory limit (Settings → Resources) should be at least 6GB.
 - **Disk**: 10GB free space for images and data volumes.
-  - macOS: Apple Silicon or Intel
-  - Windows 10 (version 1903 or later) or Windows 11 — Docker Desktop's installer enables WSL2 automatically
-  - Linux: Docker Engine + Docker Compose v2
 
 > **Note:** Docker Hub shows a "Run in Docker Desktop" button on each image page (`croeder/jupyter`, `croeder/dqd`, `croeder/matchbox`). Avoid it — it starts only that one container in isolation, leaving the other services unreachable. The pipeline requires two services running together with shared networking, which only the compose file provides. Use the `curl` commands below instead.
 
@@ -137,8 +135,8 @@ Open http://localhost:8888. Inside Jupyter you'll find two folders:
 #### Stopping
 
 ```bash
-docker compose -f jupyter_docker/docker-compose.yml down      # keep data volumes
-docker compose -f jupyter_docker/docker-compose.yml down -v   # also remove volumes (fresh start)
+docker compose down      # keep data volumes
+docker compose down -v   # also remove volumes (fresh start)
 ```
 
 ## Developing matchbox_scripts
@@ -281,11 +279,12 @@ If a replacement engine produces plain CSV row strings instead of FHIR-shaped di
 
 ## How it works
 
-1. **matchbox** runs a FHIR server with the OMOP IG loaded, exposing a `$transform` operation for each of the 11 StructureMaps
-2. **matchbox_scripts/transforms.py** calls `$transform` for each FHIR resource type and returns OMOP-shaped dicts
-3. **matchbox_scripts/load_duckdb.py** runs all transforms against the sample fixtures and writes results into a DuckDB OMOP CDM 5.4 database
-4. **jupyter_docker** imports `transforms.py` for interactive exploration — same code, human in the loop
-5. **dqd_docker** runs `load_duckdb.py` automatically on startup, then serves the OHDSI Data Quality Dashboard on port 3838
+1. **enchilada** serves OMOP vocabulary lookups over HTTPS using local Athena CSV files, acting as a FHIR terminology server for matchbox
+2. **matchbox** runs a FHIR server with the OMOP IG loaded, exposing a `$transform` operation for each of the 13 StructureMaps
+3. **matchbox_scripts/transforms.py** calls `$transform` for each FHIR resource type and returns OMOP-shaped dicts
+4. **matchbox_scripts/load_duckdb.py** runs all transforms against the sample fixtures and writes results into a DuckDB OMOP CDM 5.4 database
+5. **jupyter_docker** imports `transforms.py` for interactive exploration — same code, human in the loop
+6. **dqd_docker** runs `load_duckdb.py` automatically on startup, runs OHDSI Data Quality Dashboard checks and unit tests, and serves results on port 3838 (DQD) and port 8088 (ETL reports, unit test report)
 
 ## License
 
