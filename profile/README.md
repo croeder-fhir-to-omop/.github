@@ -13,7 +13,7 @@ The IG includes many precautions for dealing with PII in the data. This code mak
 | [matchbox_scripts](https://github.com/croeder-fhir-to-omop/matchbox_scripts) | `transforms.py` (FHIR→OMOP via matchbox), `load_duckdb.py` (ETL into OMOP CDM 5.4), and sample FHIR fixtures |
 | [jupyter_docker](https://github.com/croeder-fhir-to-omop/jupyter_docker) | Jupyter notebook environment for interactive FHIR→OMOP exploration |
 | [dqd_docker](https://github.com/croeder-fhir-to-omop/dqd_docker) | Runs the ETL then serves the OHDSI Data Quality Dashboard against the resulting OMOP CDM |
-| [enchilada](https://github.com/croeder/enchilada) | a local terminology server
+| [enchilada](https://github.com/croeder/enchilada) | Local OMOP-backed FHIR terminology server |
 
 ## Running
 
@@ -35,7 +35,19 @@ All images are published to Docker Hub. No repo clones are needed to run the pip
 
 ### Option A — Automated ETL + Data Quality Dashboard
 
-Runs matchbox, transforms all sample FHIR fixtures into OMOP CDM 5.4 (DuckDB), executes OHDSI Data Quality Dashboard checks, and serves two dashboards.
+Runs enchilada (local terminology server), matchbox (FHIR→OMOP transforms), ETL, OHDSI Data Quality Dashboard checks, and unit tests. Serves dashboards and reports.
+
+#### Prerequisites: vocabulary files
+
+enchilada needs two vocabulary files from [Athena](https://athena.ohdsi.org):
+
+1. Go to https://athena.ohdsi.org and create a free account
+2. Click **Download** and select a vocabulary bundle (SNOMED, LOINC, RxNorm, ICD-10 are sufficient for the sample fixtures)
+3. Download and extract — you need `CONCEPT.csv` and `CONCEPT_RELATIONSHIP.csv`
+
+Place both files in your working directory before starting. They can be several GB; the download may take a few minutes.
+
+> If you start without the vocabulary files, enchilada will warn but the stack will still come up. Terminology lookups will return no results until you restart with the files present.
 
 #### Starting
 
@@ -49,25 +61,47 @@ PowerShell (Windows 10/11 — note `curl.exe`, not `curl`):
 curl.exe -fsSL https://raw.githubusercontent.com/croeder-fhir-to-omop/dqd_docker/main/docker-compose.yml | docker compose -f - up
 ```
 
-Or clone just the one compose file you need:
+If your vocabulary files are not in the current directory:
+```bash
+CONCEPT_CSV=/path/to/CONCEPT.csv \
+CONCEPT_RELATIONSHIP_CSV=/path/to/CONCEPT_RELATIONSHIP.csv \
+curl -fsSL https://raw.githubusercontent.com/croeder-fhir-to-omop/dqd_docker/main/docker-compose.yml | docker compose -f - up
+```
+
+Or download the compose file first if you want to keep or edit it:
 
 ```bash
-git clone https://github.com/croeder-fhir-to-omop/dqd_docker
-docker compose -f dqd_docker/docker-compose.yml up
+curl -O https://raw.githubusercontent.com/croeder-fhir-to-omop/dqd_docker/main/docker-compose.yml
+docker compose up
 ```
 
 | URL | Description |
 |---|---|
 | http://localhost:3838 | OHDSI Data Quality Dashboard |
-| http://localhost:8088/etl_report.html | ETL report (per-fixture status, StructureMap used, root cause of any failures) |
+| http://localhost:8088 | ETL reports and unit test report |
 
-On first run matchbox loads the OMOP IG (~1 min). Subsequent runs use the cached volume.
+On first run, enchilada loads the vocabulary CSVs (~1–2 min) and matchbox loads the OMOP IG (~1 min). Both are cached in Docker volumes and skipped on subsequent starts.
+
+#### Terminology server
+
+By default matchbox uses **enchilada** — the local terminology container in `docker-compose.yml`. To switch to the public [echidna.fhir.org](https://echidna.fhir.org) instead:
+
+```bash
+MATCHBOX_FHIR_CONTEXT_TXSERVER=https://echidna.fhir.org/r4 docker compose up
+```
+
+Or add a `.env` file alongside your compose file:
+```
+MATCHBOX_FHIR_CONTEXT_TXSERVER=https://echidna.fhir.org/r4
+```
+
+enchilada still starts when using echidna (it is a healthcheck dependency), but matchbox routes all terminology lookups to echidna instead. echidna requires no local vocabulary files.
 
 #### Stopping
 
 ```bash
-docker compose -f dqd_docker/docker-compose.yml down      # keep data volumes
-docker compose -f dqd_docker/docker-compose.yml down -v   # also remove volumes (fresh start)
+docker compose down      # keep volumes (fast restart — vocabulary cache preserved)
+docker compose down -v   # also remove volumes (full reload on next start)
 ```
 
 ### Option B — Interactive Jupyter Notebooks
@@ -147,6 +181,64 @@ For resource types not listed above (e.g. Device, Death):
 2. Add a `transform_<type>()` function to `matchbox_scripts/transforms.py`
 3. Add a row to `FIXTURE_TRANSFORMS` in `matchbox_scripts/load_duckdb.py` (glob pattern, transform function, OMOP table, StructureMap name)
 4. Commit and push, then rebuild for Option A
+
+
+### Local Vocabulary and Local IG Copy
+  Starting from the published image
+
+  The published croeder/matchbox:latest image has the IG baked in at /igs/ and a base config at /defaults/application.yaml. The entrypoint loads configs
+  in order:
+
+  optional:file:/defaults/application.yaml → optional:file:/config/application.yaml
+
+  So to override the IG or config without rebuilding, you use volume mounts.
+
+  Step 1 — Put your IG tgz in a local igs/ directory
+```
+  mkdir -p igs/
+  cp /path/to/hl7.fhir.uv.omop-1.1.0.tgz ./igs/
+```
+
+  Step 2 — Write a local config/application.yaml
+```
+
+  hapi:
+    fhir:
+      implementationguides:
+        fhiromop:
+          name: hl7.fhir.uv.omop
+          version: 1.1.0
+          url: file:///igs/hl7.fhir.uv.omop-1.1.0.tgz
+
+  matchbox:
+    fhir:
+      context:
+        igsPreloaded:
+          - hl7.fhir.uv.omop#1.1.0
+```
+
+  Step 3 — Mount both in docker-compose.yml
+```
+
+  services:
+    matchbox:
+      image: croeder/matchbox:latest
+      ports:
+        - "8080:8080"
+      volumes:
+        - matchbox-db:/database
+        - ./config:/config:ro      # your application.yaml overrides /defaults/
+        - ./igs:/igs:ro            # your IG tgz replaces or supplements the baked-in one
+
+  volumes:
+    matchbox-db:
+```
+
+  The docker-compose.yml in matchbox_docker/ already has this shape — the ./config and ./igs mounts are the override mechanism. No image rebuild needed.
+
+  One caveat: if you're swapping to a different IG tgz, also delete the matchbox-db volume so matchbox re-loads from scratch (docker compose down -v),
+  otherwise it'll use the cached H2 state.
+
 
 ### Extending or replacing the conversion engine
 
