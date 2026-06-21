@@ -26,7 +26,7 @@ All images are published to Docker Hub. No repo clones are needed to run the pip
   - macOS: Apple Silicon or Intel
   - Windows 10 (version 1903 or later) or Windows 11 — Docker Desktop's installer enables WSL2 automatically
   - Linux: Docker Engine + Docker Compose v2
-- **RAM**: 8GB minimum (16GB recommended). Docker Desktop's memory limit (Settings → Resources) should be at least 6GB.
+- **RAM**: 16GB minimum. Docker Desktop's memory limit (Settings → Resources) should be at least 12GB.
 - **Disk**: 10GB free space for images and data volumes.
 
 > **Note:** Docker Hub shows a "Run in Docker Desktop" button on each image page (`croeder/jupyter`, `croeder/dqd`, `croeder/matchbox`). Avoid it — it starts only that one container in isolation, leaving the other services unreachable. The pipeline requires two services running together with shared networking, which only the compose file provides. Use the `curl` commands below instead.
