@@ -95,7 +95,7 @@ On first run, enchilada loads the vocabulary CSVs (~1–2 min) and matchbox load
 
 Two terminology servers are supported:
 
-**enchilada** — a local OMOP-backed terminology server included in `docker-compose.yml`. Requires `CONCEPT.csv` and `CONCEPT_RELATIONSHIP.csv` from Athena (see above). The image also bundles supplemental concept mappings for FHIR-specific code systems not present in Athena (AllergyIntoleranceCategory, CVX vaccines, AdministrativeGender, and others) that are needed to map FHIR codes to standard OMOP concepts. This is the default.
+**enchilada** — a local OMOP-backed terminology server included in `docker-compose.yml`. Requires `CONCEPT.csv` and `CONCEPT_RELATIONSHIP.csv` from Athena (see above). You can also supply supplemental concept files (`concept_extra.tsv`, `concept_relationship_extra.tsv`, `vocabulary_extra.tsv`) to add concept mappings for FHIR-specific code systems not present in Athena. These are optional; enchilada starts without them. This is the default.
 
 **echidna** — the public [echidna.fhir.org](https://echidna.fhir.org) terminology service. Available free of charge with rate limits; no local vocabulary files required. API key authentication for higher limits is not currently supported in the matchbox txServer code path.
 
