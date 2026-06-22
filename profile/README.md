@@ -91,7 +91,7 @@ All images are published to Docker Hub. No git repository clones are needed to r
 - **RAM**: 16GB minimum. Docker Desktop's memory limit (Settings → Resources) should be at least 12GB.
 - **Disk**: 10GB free space for images and data volumes.
 
-> **Note:** Docker Hub shows a "Run in Docker Desktop" button on each image page (`croeder/jupyter`, `croeder/dqd`, `croeder/matchbox`). Avoid it — it starts only that one container in isolation, leaving the other services unreachable. The pipeline requires two services running together with shared networking, which only the compose file provides. Use the `curl` commands below instead.
+> **Note:** Docker Hub shows a "Run in Docker Desktop" button on each image page (`croeder/enchilada`, `croeder/matchbox`, `croeder/dqd`, `croeder/jupyter`). Avoid it — it starts only that one container in isolation, leaving the other services unreachable. The pipeline requires two services running together with shared networking, which only the compose file provides. Use the `curl` commands below instead.
 
 ### Option A — Automated ETL + Data Quality Dashboard
 
@@ -216,6 +216,11 @@ docker compose down -v   # also remove volumes (fresh start)
 ```
 
 ## Developing matchbox_scripts
+
+`matchbox_scripts` contains two build tools:
+
+- **`build.py`** — the standard pipeline for the default r5/1.0.0 stack. Pass steps as arguments (`ig`, `mvn`, `docker`, `restart`, `etl`, `test`, `release`); no arguments runs the full pipeline.
+- **`build_profiles.py`** — the multi-stack variant with `--fhir-version r4|r5` and `--ig-version 1.0.0|1.0.1` flags. Use this when working with stacks other than the default, or when running multiple stacks in parallel via `dqd_docker/docker-compose.profiles.yml`.
 
 To edit transforms, ETL logic, or fixtures and see your changes live, clone `matchbox_scripts` alongside the compose repo and use the dev overlay:
 
@@ -372,8 +377,8 @@ If a replacement engine produces plain CSV row strings instead of FHIR-shaped di
 ## How it works
 
 1. **enchilada** serves OMOP vocabulary lookups over HTTPS using local Athena CSV files, acting as a FHIR terminology server for matchbox
-2. **matchbox** runs a FHIR server with the OMOP IG loaded, exposing a `$transform` operation for each of the 13 StructureMaps
-3. **matchbox_scripts/transforms.py** calls `$transform` for each FHIR resource type and returns OMOP-shaped dicts
+2. **matchbox** runs a FHIR server with the OMOP IG loaded, exposing a `$transform` operation for each of the 11 StructureMaps
+3. **matchbox_scripts/transforms.py** calls `$transform` for each FHIR resource type and returns OMOP-shaped dicts. Note: `MedicationStatement` is mapped to `drug_exposure`; `MedicationRequest` is intentionally out of scope as it represents a prescription order (an intention), not a completed act.
 4. **matchbox_scripts/load_duckdb.py** runs all transforms against the sample fixtures and writes results into a DuckDB OMOP CDM 5.4 database
 5. **jupyter_docker** imports `transforms.py` for interactive exploration — same code, human in the loop
 6. **dqd_docker** runs `load_duckdb.py` automatically on startup, runs OHDSI Data Quality Dashboard checks and unit tests, and serves results on port 3838 (DQD) and port 8088 (ETL reports, unit test report)
