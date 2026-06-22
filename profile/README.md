@@ -17,7 +17,7 @@ The IG includes many precautions for dealing with PII in the data. This code mak
 | [matchbox_scripts](https://github.com/croeder-fhir-to-omop/matchbox_scripts) | `transforms.py` (FHIR→OMOP via matchbox), `load_duckdb.py` (ETL into OMOP CDM 5.4), and sample FHIR fixtures |
 | [jupyter_docker](https://github.com/croeder-fhir-to-omop/jupyter_docker) | Jupyter notebook environment for interactive FHIR→OMOP exploration |
 | [dqd_docker](https://github.com/croeder-fhir-to-omop/dqd_docker) | Runs the ETL then serves the OHDSI Data Quality Dashboard against the resulting OMOP CDM |
-| [enchilada](https://github.com/croeder/enchilada) | Local OMOP-backed FHIR terminology server |
+| [enchilada](https://github.com/croeder-fhir-to-omop/enchilada) | Local OMOP-backed FHIR terminology server |
 
 ## FHIR, OMOP, and IG Versions
 
@@ -33,7 +33,7 @@ A profiles-based compose setup (`dqd_docker/docker-compose.profiles.yml`) exists
 
 ## Vocabularies
 
-Vocabulary use falls into two categories: code systems translated via ConceptMaps embedded in StructureMaps, and code systems looked up dynamically through the terminology server at runtime.
+Vocabulary use falls into two categories: code systems translated via ConceptMaps embedded in StructureMaps, and code systems looked up dynamically through a terminology server at runtime. Calls to the function translate() in the structure maps indicate which method to use by the inclusion of a concept map name. If the name is present, it is used. If it is an empty string, the configured server is used. ConceptMaps are used for HL7 terminologies as a distribution mechanism. If a configured server included these vocabularies, the concept maps would be redundant.
 
 ### ConceptMap translations (StructureMap-embedded)
 
@@ -50,15 +50,13 @@ These code systems are mapped to OMOP concept IDs by ConceptMaps referenced dire
 | v3 RouteOfAdministration | `http://terminology.hl7.org/CodeSystem/v3-RouteOfAdministration` | ImmunizationMap |
 | Immunization Origin | `http://terminology.hl7.org/CodeSystem/immunization-origin` | ImmunizationMap |
 
-All ConceptMaps translate to OMOP concept IDs via `https://fhir-terminology.ohdsi.org`.
+All ConceptMaps translate to OMOP concept IDs using the code system reference `https://fhir-terminology.ohdsi.org`.
 
 ### Terminology server lookups
 
-Clinical code systems are resolved at runtime by calling the terminology server. These fall into two groups depending on which terminology server is in use.
+Clinical code systems are resolved at runtime by calling a terminology server.
 
-#### Athena vocabularies (both enchilada and echidna)
-
-Clinical terminologies must be downloaded from [Athena](https://athena.ohdsi.org) and are required by both enchilada and echidna:
+#### Athena vocabularies 
 
 | Vocabulary | Athena name | Used for |
 |---|---|---|
@@ -70,16 +68,19 @@ Clinical terminologies must be downloaded from [Athena](https://athena.ohdsi.org
 | UCUM | UCUM | Units of measure |
 | CDC Race & Ethnicity | Race | Patient race and ethnicity |
 
+Clinical terminologies can be downloaded from [Athena](https://athena.ohdsi.org). The local server, enchilada, requires this download as an independent step.
+
 #### HL7/FHIR-defined code systems
 
-The ConceptMap translations above use HL7 and FHIR-defined code systems (administrative-gender, v3-ActCode, condition-clinical, etc.) that are not available in Athena or echidna.
+The ConceptMap translations above use HL7 and FHIR-defined code systems (administrative-gender, v3-ActCode, condition-clinical, etc.) that may not be available from terminology servers loaded only with Athena vocabularies.
 
-- **enchilada** supports them via supplemental concept files (`concept_extra.tsv`, `concept_relationship_extra.tsv`, `vocabulary_extra.tsv`) placed in the working directory before startup.
-- **echidna** does not currently host these vocabularies; support for them via echidna is an open gap.
+- Local terminology server enchilada can support additional vocabularies via supplemental concept files (`concept_extra.tsv`, `concept_relationship_extra.tsv`, `vocabulary_extra.tsv`) placed in the working directory before startup.
+
+- Hosted or cloud servers may also support additional vocabularies.
 
 ## Running
 
-All images are published to Docker Hub. No repo clones are needed to run the pipeline.
+All images are published to Docker Hub. No git repository clones are needed to run the pipeline.
 
 ### Prerequisites
 
@@ -149,15 +150,15 @@ On first run, enchilada loads the vocabulary CSVs (~1–2 min) and matchbox load
 
 #### Terminology server
 
-Two terminology servers are supported:
-
 **enchilada** — a local OMOP-backed terminology server included in `docker-compose.yml`. Requires `CONCEPT.csv` and `CONCEPT_RELATIONSHIP.csv` from Athena (see above). You can also supply supplemental concept files (`concept_extra.tsv`, `concept_relationship_extra.tsv`, `vocabulary_extra.tsv`) to add concept mappings for FHIR-specific code systems not present in Athena. These are optional; enchilada starts without them. This is the default.
 
 enchilada runs over HTTPS with a self-signed certificate. The matchbox image includes a combined JKS truststore (`/certs/combined.jks`) that merges the JVM's default CA bundle with enchilada's self-signed cert, so matchbox can reach both enchilada (self-signed) and public HTTPS services (CA-signed) without disabling certificate validation. The enchilada cert and the combined truststore are baked into the published images — no manual certificate setup is required.
 
-**echidna** — the public [echidna.fhir.org](https://echidna.fhir.org) terminology service. Available free of charge with rate limits; no local vocabulary files required. API key authentication for higher limits is not currently supported in the matchbox txServer code path. The free tier enforces approximately 60 requests per minute; set `TRANSFORM_SLEEP=1` in the dqd container environment to throttle ETL calls accordingly.
+**Hosted/cloud** — any FHIR R4 terminology server can be configured via `MATCHBOX_FHIR_CONTEXT_TXSERVER`. The server must include OMOP concept vocabularies; not all public FHIR servers do — tx.fhir.org, for example, may not have them.
 
-To use echidna, set the terminology server URL when starting:
+**echidna** — a public [echidna.fhir.org](https://echidna.fhir.org) terminology service. Available free of charge with rate limits; no local vocabulary files required. API key authentication for higher limits is not currently supported in the matchbox txServer code path. The free tier enforces approximately 60 requests per minute; set `TRANSFORM_SLEEP=1` in the dqd container environment to throttle ETL calls accordingly.
+
+To use a hosted server, set the terminology server URL when starting:
 
 ```bash
 MATCHBOX_FHIR_CONTEXT_TXSERVER=https://echidna.fhir.org/r4 docker compose up
@@ -273,19 +274,18 @@ The `croeder/matchbox:latest` image has `hl7.fhir.uv.omop#1.0.0` baked in. If yo
 
 #### Step 1 — Build the IG
 
-The IG is built with the [bonfhir ig-toolbox](https://github.com/bonfhir/ig-toolbox) Docker container. Clone `fhir-omop-ig` alongside your other repos, then:
+The IG is built using the [bonfhir ig-toolbox](https://github.com/bonfhir/ig-toolbox) Docker container, which wraps the FHIR publisher JAR. The `build.py ig` step handles this automatically — it runs the bonfhir container against `fhir-omop-ig/`, calls the publisher with `tx.fhir.org` as the build-time terminology server (this is separate from the runtime terminology server used by the pipeline), then copies the output into place and strips transitive package dependencies.
+
+Clone `fhir-omop-ig` and `matchbox_scripts` side by side, then:
 
 ```bash
 git clone https://github.com/croeder-fhir-to-omop/fhir-omop-ig
-cd fhir-omop-ig
-docker run --rm -v "$(pwd):/workspace" ghcr.io/bonfhir/ig-toolbox:latest build
+git clone https://github.com/croeder-fhir-to-omop/matchbox_scripts
+cd matchbox_scripts
+python3 build.py ig
 ```
 
-This produces a package tarball at `fhir-omop-ig/output/package.tgz`. Copy it into `matchbox_docker/igs/` with the versioned name matchbox expects:
-
-```bash
-cp fhir-omop-ig/output/package.tgz matchbox_docker/igs/hl7.fhir.uv.omop-<version>.tgz
-```
+This produces `fhir-omop-ig/output/package.tgz` and copies it to `matchbox_docker/igs/hl7.fhir.uv.omop-1.0.0.tgz`, ready for the Docker build.
 
 #### Path A — Local run (no image rebuild)
 
