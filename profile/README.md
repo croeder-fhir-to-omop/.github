@@ -161,6 +161,12 @@ enchilada runs over HTTPS with a self-signed certificate. The matchbox image inc
 To use a hosted server, set the terminology server URL when starting:
 
 ```bash
+curl -fsSL https://raw.githubusercontent.com/croeder-fhir-to-omop/dqd_docker/main/docker-compose.yml \
+  | MATCHBOX_FHIR_CONTEXT_TXSERVER=https://echidna.fhir.org/r4 docker compose -f - up
+```
+
+Or if you have the compose file locally:
+```bash
 MATCHBOX_FHIR_CONTEXT_TXSERVER=https://echidna.fhir.org/r4 docker compose up
 ```
 
