@@ -142,8 +142,8 @@ docker compose up
 
 The port 8088 index links to three reports:
 
-- **ETL report — test files**: results from `matchbox_scripts/test_files_r5/`, a set of targeted FHIR fixtures designed to exercise specific StructureMap behaviors and edge cases
-- **ETL report — sample fixtures**: results from `matchbox_scripts/sample_fixtures_r5/`, a broader set of representative patient data
+- **ETL report — test files**: results from `matchbox_scripts/test_files_r5/`, simple single-resource files (one per scenario) covering the happy path and basic edge cases for each StructureMap — no patient linking between files
+- **ETL report — sample fixtures**: results from `matchbox_scripts/sample_fixtures_r5/`, a patient-centric set with four synthetic patients (p1–p4) whose encounters, conditions, observations, and medications cross-reference each other; includes explicit negative cases (files suffixed `_NEG`) and issue-tracked edge cases (files referencing `f2o-xxx` issue numbers)
 - **Unit test report**: results from `matchbox_scripts/tests/test_r5_fml_transforms.py`, a pytest suite that calls matchbox's `$transform` endpoint directly and asserts specific OMOP field values — these are the primary correctness tests for the StructureMap implementations
 
 On first run, enchilada loads the vocabulary CSVs (~1–2 min) and matchbox loads the OMOP IG (~1 min). Both are cached in Docker volumes and skipped on subsequent starts.
@@ -249,7 +249,13 @@ For each row, every fixture file whose name matches the glob is passed to the tr
 
 ### Adding FHIR fixtures
 
-Fixtures are FHIR resource JSON files stored in `matchbox_scripts/`.
+Fixtures are FHIR resource JSON files stored in `matchbox_scripts/`. The two built-in sets serve different purposes: `test_files_r5/` contains simple single-resource files for exercising specific StructureMap scenarios; `sample_fixtures_r5/` contains a linked multi-patient set for broader regression coverage. You can add files to either set or bring your own data entirely.
+
+#### Using your own FHIR data
+
+To run the pipeline against your own FHIR resources without modifying the built-in fixture sets, drop your JSON files into `matchbox_scripts/sample_fixtures_r5/` — any file whose name matches an existing glob pattern in `FIXTURE_TRANSFORMS_R5` will be picked up automatically. Name files after the resource type they contain (e.g. `condition_*.json`, `observation_*.json`) to match the existing patterns. The ETL report on port 8088 will include your files alongside the built-in ones.
+
+If you want a completely separate directory, you would need to edit `load_duckdb.py` to point at it — there is no command-line argument for this yet.
 
 #### Existing StructureMaps
 
