@@ -31,6 +31,52 @@ The tests here assume FHIR R5. matchbox calls the terminology server via R4 endp
 
 A profiles-based compose setup (`dqd_docker/docker-compose.profiles.yml`) exists for running multiple stacks in parallel and switching between FHIR R4 and R5 or between IG versions — see the `dqd_docker` repo for details.
 
+## Vocabularies
+
+Vocabulary use falls into two categories: code systems translated via ConceptMaps embedded in StructureMaps, and code systems looked up dynamically through the terminology server at runtime.
+
+### ConceptMap translations (StructureMap-embedded)
+
+These code systems are mapped to OMOP concept IDs by ConceptMaps referenced directly in StructureMaps:
+
+| Source Vocabulary | Code System | StructureMap |
+|---|---|---|
+| FHIR Administrative Gender | `http://hl7.org/fhir/administrative-gender` | PersonMap |
+| HL7 v3 ActCode (encounter class) | `http://terminology.hl7.org/CodeSystem/v3-ActCode` | EncounterVisit |
+| Admit Source | `http://terminology.hl7.org/CodeSystem/admit-source` | EncounterVisit |
+| Discharge Disposition | `http://terminology.hl7.org/CodeSystem/discharge-disposition` | EncounterVisit |
+| Condition Clinical Status | `http://terminology.hl7.org/CodeSystem/condition-clinical` | ConditionMap |
+| Allergy Intolerance Category | `http://hl7.org/fhir/allergy-intolerance-category` | Allergy |
+| v3 RouteOfAdministration | `http://terminology.hl7.org/CodeSystem/v3-RouteOfAdministration` | ImmunizationMap |
+| Immunization Origin | `http://terminology.hl7.org/CodeSystem/immunization-origin` | ImmunizationMap |
+
+All ConceptMaps translate to OMOP concept IDs via `https://fhir-terminology.ohdsi.org`.
+
+### Terminology server lookups
+
+Clinical code systems are resolved at runtime by calling the terminology server. These fall into two groups depending on which terminology server is in use.
+
+#### Athena vocabularies (both enchilada and echidna)
+
+Clinical terminologies must be downloaded from [Athena](https://athena.ohdsi.org) and are required by both enchilada and echidna:
+
+| Vocabulary | Athena name | Used for |
+|---|---|---|
+| SNOMED CT | SNOMED | Conditions, procedures, observations, allergy substances |
+| LOINC | LOINC | Lab results, vitals, blood pressure panels |
+| RxNorm | RxNorm | Medications, allergy substances |
+| ICD-10-CM | ICD10CM | Diagnoses |
+| CVX | CVX | Immunization vaccines |
+| UCUM | UCUM | Units of measure |
+| CDC Race & Ethnicity | Race | Patient race and ethnicity |
+
+#### HL7/FHIR-defined code systems
+
+The ConceptMap translations above use HL7 and FHIR-defined code systems (administrative-gender, v3-ActCode, condition-clinical, etc.) that are not available in Athena or echidna.
+
+- **enchilada** supports them via supplemental concept files (`concept_extra.tsv`, `concept_relationship_extra.tsv`, `vocabulary_extra.tsv`) placed in the working directory before startup.
+- **echidna** does not currently host these vocabularies; support for them via echidna is an open gap.
+
 ## Running
 
 All images are published to Docker Hub. No repo clones are needed to run the pipeline.
@@ -52,21 +98,10 @@ Runs enchilada (local terminology server), matchbox (FHIR→OMOP transforms), ET
 
 #### Prerequisites: vocabulary files
 
-enchilada needs two vocabulary files from [Athena](https://athena.ohdsi.org):
+enchilada needs two vocabulary files from [Athena](https://athena.ohdsi.org). See the [Vocabularies](#vocabularies) section above for the full list of required vocabulary bundles.
 
 1. Go to https://athena.ohdsi.org and create a free account
-2. Click **Download** and select a vocabulary bundle. The sample fixtures use these vocabularies:
-
-| Vocabulary | Athena name | Used for |
-|---|---|---|
-| SNOMED CT | SNOMED | Conditions, procedures, observations |
-| LOINC | LOINC | Lab results, vitals, blood pressure panels |
-| RxNorm | RxNorm | Medications |
-| ICD-10-CM | ICD10CM | Diagnoses |
-| CVX | CVX | Immunizations / vaccines |
-| UCUM | UCUM | Units of measure |
-| CDC Race & Ethnicity | Race | Patient race and ethnicity |
-
+2. Click **Download** and select the vocabulary bundles listed in the Vocabularies section
 3. Download and extract — you need `CONCEPT.csv` and `CONCEPT_RELATIONSHIP.csv`
 
 Place both files in your working directory before starting. They can be several GB; the download may take a few minutes.
