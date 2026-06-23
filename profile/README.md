@@ -42,8 +42,8 @@ The matchbox image is published to Docker Hub under `croeder/matchbox`. Tags ref
 The compose files use `croeder/matchbox:latest` by default. To run with the fork's main instead:
 
 ```bash
-MATCHBOX_IMAGE=croeder/matchbox:main \
-  curl -fsSL https://raw.githubusercontent.com/croeder-fhir-to-omop/dqd_docker/main/docker-compose.yml \
+export MATCHBOX_IMAGE=croeder/matchbox:main
+curl -fsSL https://raw.githubusercontent.com/croeder-fhir-to-omop/dqd_docker/main/docker-compose.yml \
   | docker compose -f - up
 ```
 
