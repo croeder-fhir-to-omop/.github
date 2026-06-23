@@ -29,6 +29,26 @@ This project uses clinical terminology content from LOINC (Regenstrief Institute
 | [dqd_docker](https://github.com/croeder-fhir-to-omop/dqd_docker) | Runs the ETL then serves the OHDSI Data Quality Dashboard against the resulting OMOP CDM |
 | [enchilada](https://github.com/croeder-fhir-to-omop/enchilada) | Local OMOP-backed FHIR terminology server |
 
+## Docker Images
+
+The matchbox image is published to Docker Hub under `croeder/matchbox`. Tags reflect which IG source was used at build time:
+
+| Tag | IG Source |
+|---|---|
+| `croeder/matchbox:latest` | [`HL7/fhir-omop-ig`](https://github.com/HL7/fhir-omop-ig) `main` — the official upstream release |
+| `croeder/matchbox:main` | [`croeder-fhir-to-omop/fhir-omop-ig`](https://github.com/croeder-fhir-to-omop/fhir-omop-ig) `main` — this organization's fork |
+| `croeder/matchbox:<branch>` | `croeder-fhir-to-omop/fhir-omop-ig` branch `<branch>` |
+
+The compose files use `croeder/matchbox:latest` by default. To use the fork's main instead:
+
+```bash
+# macOS / Linux
+curl -fsSL https://raw.githubusercontent.com/croeder-fhir-to-omop/dqd_docker/main/docker-compose.yml \
+  | sed 's|croeder/matchbox:latest|croeder/matchbox:main|g' | docker compose -f - up
+```
+
+Or if you have the compose file locally, set the image tag in a `.env` file alongside it.
+
 ## FHIR, OMOP, and IG Versions
 
 | Component | Version |
@@ -362,18 +382,25 @@ docker compose up
 
 #### Path B — Bake into the image and publish
 
-Clone `matchbox_docker` alongside your other repos, place your built IG package in `matchbox_docker/igs/`, then use the build script:
+Clone `matchbox_docker` alongside your other repos, then use the build script:
 
 ```bash
 git clone https://github.com/croeder-fhir-to-omop/matchbox_docker
 git clone https://github.com/croeder-fhir-to-omop/matchbox_scripts
 
-# Build and publish the matchbox image
 cd matchbox_scripts
+
+# Default: builds from HL7/fhir-omop-ig upstream/main → croeder/matchbox:latest
 python3 build.py ig mvn docker release
+
+# Fork main: builds from croeder-fhir-to-omop/fhir-omop-ig main → croeder/matchbox:main
+python3 build.py --ig-source main ig mvn docker release
+
+# Branch: builds from a named fork branch → croeder/matchbox:<branch>
+python3 build.py --ig-source fix-translate-rule-names ig docker release
 ```
 
-This builds the IG, builds the matchbox JAR, bakes a new `croeder/matchbox:latest` image, and pushes it to Docker Hub. Anyone who then does `docker compose pull` or runs the curl command fresh gets the updated IG.
+The build script checks out the requested source in `fhir-omop-ig`, builds the IG and image, then restores the original branch. Anyone who then does `docker compose pull` or runs the curl command fresh gets the updated image.
 
 
 ### Extending or replacing the conversion engine
