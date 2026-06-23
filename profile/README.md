@@ -7,11 +7,15 @@ Conversion operates at the level of individual FHIR resources. FHIR Bundles are 
 ## DISCLAIMER
 The IG includes many precautions for dealing with PII in the data. This code makes no guarantee to do so. Do not use it with PII or PHI.
 
-## LICENSES
-This project uses clinical terminology content from numerous sources each with their own licences, described in [NOTICES.md](https://github.com/croeder-fhir-to-omop/.github/blob/main/profile/NOTICES.md)
+## License
 
-All repositories in this organization are licensed under the [Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0). See the section below for more detail.
+All repositories in this organization are licensed under the [Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0). Copyright 2026 Christophe Roeder.
 
+[matchbox](https://github.com/croeder-fhir-to-omop/matchbox) is a fork of [ahdis/matchbox](https://github.com/ahdis/matchbox) and retains the original copyright of the ahdis contributors.
+
+This project uses clinical terminology content from LOINC (Regenstrief Institute), SNOMED CT (SNOMED International), HL7 International, UCUM (Regenstrief Institute), CVX (CDC/NLM), ICD-10-CM (CDC/NCHS), RxNorm (NLM), and OMOP Standardized Vocabularies (OHDSI/Athena). Each carries its own license terms. See [NOTICES.md](https://github.com/croeder-fhir-to-omop/.github/blob/main/profile/NOTICES.md) for details.
+
+> **⚠ SNOMED CT users outside the United States:** SNOMED CT is not freely available in all countries. Users in SNOMED International member countries (including Australia, Canada, the Netherlands, and Poland) may access it through their national member organization at no cost. Users in non-member countries must obtain a commercial license from SNOMED International before using this project with SNOMED CT content. See [NOTICES.md](https://github.com/croeder-fhir-to-omop/.github/blob/main/profile/NOTICES.md) for country-specific licensing links.
 
 ## Repositories
 
@@ -397,12 +401,3 @@ If a replacement engine produces plain CSV row strings instead of FHIR-shaped di
 5. **jupyter_docker** imports `transforms.py` for interactive exploration — same code, human in the loop
 6. **dqd_docker** runs `load_duckdb.py` automatically on startup, runs OHDSI Data Quality Dashboard checks and unit tests, and serves results on port 3838 (DQD) and port 8088 (ETL reports, unit test report)
 
-## License
-
-All repositories in this organization are licensed under the [Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0). Copyright 2026 Christophe Roeder.
-
-[matchbox](https://github.com/croeder-fhir-to-omop/matchbox) is a fork of [ahdis/matchbox](https://github.com/ahdis/matchbox) and retains the original copyright of the ahdis contributors.
-
-This project uses clinical terminology content from LOINC (Regenstrief Institute), SNOMED CT (SNOMED International), HL7 International, UCUM (Regenstrief Institute), CVX (CDC/NLM), ICD-10-CM (CDC/NCHS), RxNorm (NLM), and OMOP Standardized Vocabularies (OHDSI/Athena). Each carries its own license terms. See [NOTICES.md](https://github.com/croeder-fhir-to-omop/.github/blob/main/profile/NOTICES.md) in the matchbox_scripts repository for details.
-
-> **⚠ SNOMED CT users outside the United States:** SNOMED CT is not freely available in all countries. Users in SNOMED International member countries (including Australia, Canada, the Netherlands, and Poland) may access it through their national member organization at no cost. Users in non-member countries must obtain a commercial license from SNOMED International before using this project with SNOMED CT content. See [NOTICES.md](https://github.com/croeder-fhir-to-omop/.github/blob/main/profile/NOTICES.md) for country-specific licensing links.
