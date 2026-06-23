@@ -7,6 +7,12 @@ Conversion operates at the level of individual FHIR resources. FHIR Bundles are 
 ## DISCLAIMER
 The IG includes many precautions for dealing with PII in the data. This code makes no guarantee to do so. Do not use it with PII or PHI.
 
+## LICENSES
+This project uses clinical terminology content from numerous sources each with their own licences, described in [NOTICES.md]/(NOTICES.md)
+
+All repositories in this organization are licensed under the [Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0). See the section below for more detail.
+
+
 ## Repositories
 
 | Repo | Description |
