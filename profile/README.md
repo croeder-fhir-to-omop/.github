@@ -49,6 +49,24 @@ curl -fsSL https://raw.githubusercontent.com/croeder-fhir-to-omop/dqd_docker/mai
 
 Or if you have the compose file locally, set the image tag in a `.env` file alongside it.
 
+To see which IG source and commit a local or pulled image was built from:
+
+```bash
+docker inspect croeder/matchbox:latest | python3 -c "
+import json, sys
+labels = json.load(sys.stdin)[0]['Config']['Labels']
+for k, v in labels.items():
+    if k.startswith('fhir-omop-ig'):
+        print(f'{k}: {v}')
+"
+```
+
+```
+fhir-omop-ig.source:     upstream
+fhir-omop-ig.commit:     1ec215b3f...
+fhir-omop-ig.build-date: 2026-06-23T19:05:00Z
+```
+
 ## FHIR, OMOP, and IG Versions
 
 | Component | Version |
