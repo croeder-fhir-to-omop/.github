@@ -248,6 +248,12 @@ docker compose down      # keep volumes (fast restart — vocabulary cache prese
 docker compose down -v   # also remove volumes (full reload on next start)
 ```
 
+> **Switching matchbox images:** run `docker compose down -v` before changing `MATCHBOX_IMAGE`, or the old IG will be reused from the cached volume. If volumes persist, find and remove them manually. Docker compose names volumes using the directory you ran it from as a prefix — if you ran from a directory called `mydata`, your volumes will be `mydata_enchilada-db`, `mydata_matchbox-db`, and `mydata_omop-db`:
+> ```bash
+> docker volume ls
+> docker volume rm <dir>_enchilada-db <dir>_matchbox-db <dir>_omop-db
+> ```
+
 ### Option B — Interactive Jupyter Notebooks
 
 Starts matchbox and a Jupyter notebook server with `transforms.py` pre-installed for hands-on FHIR→OMOP exploration.
