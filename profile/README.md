@@ -156,7 +156,9 @@ enchilada runs over HTTPS with a self-signed certificate. The matchbox image inc
 
 **Hosted/cloud** — any FHIR R4 terminology server can be configured via `MATCHBOX_FHIR_CONTEXT_TXSERVER`. The server must include OMOP concept vocabularies; not all public FHIR servers do — tx.fhir.org, for example, may not have them.
 
-**echidna** — a public [echidna.fhir.org](https://echidna.fhir.org) terminology service. Available free of charge with rate limits; no local vocabulary files required. API key authentication for higher limits is not currently supported in the matchbox txServer code path. The free tier enforces approximately 60 requests per minute; set `TRANSFORM_SLEEP=1` in the dqd container environment to throttle ETL calls accordingly.
+- **echidna** — a public [echidna.fhir.org](https://echidna.fhir.org) terminology service. Available free of charge with rate limits; no local vocabulary files required. API key authentication for higher limits is not currently supported in the matchbox txServer code path. The free tier enforces approximately 60 requests per minute; set `TRANSFORM_SLEEP=1` in the dqd container environment to throttle ETL calls accordingly.
+
+- The default configuration uses locally loaded vocabularies obtained directly by the participant. Alternative terminology services may be used, but participants should review any applicable licensing requirements associated with the vocabularies being accessed.
 
 To use a hosted server, set the terminology server URL when starting:
 
