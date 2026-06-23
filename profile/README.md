@@ -39,15 +39,7 @@ The matchbox image is published to Docker Hub under `croeder/matchbox`. Tags ref
 | `croeder/matchbox:main` | [`croeder-fhir-to-omop/fhir-omop-ig`](https://github.com/croeder-fhir-to-omop/fhir-omop-ig) `main` — this organization's fork |
 | `croeder/matchbox:<branch>` | `croeder-fhir-to-omop/fhir-omop-ig` branch `<branch>` |
 
-The compose files use `croeder/matchbox:latest` by default. To use the fork's main instead:
-
-```bash
-# macOS / Linux
-curl -fsSL https://raw.githubusercontent.com/croeder-fhir-to-omop/dqd_docker/main/docker-compose.yml \
-  | sed 's|croeder/matchbox:latest|croeder/matchbox:main|g' | docker compose -f - up
-```
-
-Or if you have the compose file locally, set the image tag in a `.env` file alongside it.
+The compose files use `croeder/matchbox:latest` by default. To use a different tag, download the compose file and edit the `image:` line under the `matchbox` service, or set `MATCHBOX_IMAGE` in a `.env` file alongside it.
 
 To see which IG source and commit a local or pulled image was built from:
 
