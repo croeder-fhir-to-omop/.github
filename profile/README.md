@@ -20,6 +20,8 @@ Vocabulary download from [Athena](https://athena.ohdsi.org) can be several GB an
 2. Select vocabulary bundles: SNOMED, ICD10CM, ICD9CM, RxNorm, LOINC, CVX, UCUM, Race
 3. Download and extract — you need `CONCEPT.csv` and `CONCEPT_RELATIONSHIP.csv`
 
+> **Licensing note:** Creating an Athena account and downloading vocabulary files constitutes acceptance of Athena's terms of use, which incorporate the per-vocabulary license terms described in [NOTICES.md](https://github.com/croeder-fhir-to-omop/.github/blob/main/profile/NOTICES.md). Review those terms before downloading, particularly for SNOMED CT if you are outside the United States.
+
 ### Get running
 
 **Observers — just see the pipeline results:**
@@ -102,6 +104,8 @@ All repositories in this organization are licensed under the [Apache License 2.0
 This project uses clinical terminology content from LOINC (Regenstrief Institute), SNOMED CT (SNOMED International), HL7 International, UCUM (Regenstrief Institute), CVX (CDC/NLM), ICD-10-CM (CDC/NCHS), RxNorm (NLM), and OMOP Standardized Vocabularies (OHDSI/Athena). Each carries its own license terms. See [NOTICES.md](https://github.com/croeder-fhir-to-omop/.github/blob/main/profile/NOTICES.md) for details.
 
 > **⚠ SNOMED CT users outside the United States:** SNOMED CT is not freely available in all countries. Users in SNOMED International member countries (including Australia, Canada, the Netherlands, and Poland) may access it through their national member organization at no cost. Users in non-member countries must obtain a commercial license from SNOMED International before using this project with SNOMED CT content. See [NOTICES.md](https://github.com/croeder-fhir-to-omop/.github/blob/main/profile/NOTICES.md) for country-specific licensing links.
+
+> **⚠ LOINC users and distributors:** LOINC content may be used free of charge, but the [LOINC license](https://loinc.org/license/) requires that the LOINC copyright notice be preserved and that LOINC content not be modified. LOINC codes appear in the sample test fixtures distributed as part of this project's Docker images. Developers who extend those fixtures or redistribute derived images should review the LOINC license terms in [NOTICES.md](https://github.com/croeder-fhir-to-omop/.github/blob/main/profile/NOTICES.md).
 
 ## Repositories
 
@@ -253,6 +257,8 @@ enchilada needs two vocabulary files from [Athena](https://athena.ohdsi.org). Se
 2. Click **Download** and select the vocabulary bundles listed in the Vocabularies section
 3. Download and extract — you need `CONCEPT.csv` and `CONCEPT_RELATIONSHIP.csv`
 
+> **Licensing note:** Creating an Athena account and downloading vocabulary files constitutes acceptance of Athena's terms of use, which incorporate the per-vocabulary license terms described in [NOTICES.md](https://github.com/croeder-fhir-to-omop/.github/blob/main/profile/NOTICES.md). Review those terms before downloading, particularly for SNOMED CT if you are outside the United States.
+
 Place both files in your working directory before starting. They can be several GB; the download may take a few minutes.
 
 > If you start without the vocabulary files, enchilada will warn but the stack will still come up. Terminology lookups will return no results until you restart with the files present.
@@ -304,7 +310,7 @@ enchilada runs over HTTPS with a self-signed certificate. The matchbox image inc
 
 **Hosted/cloud** — any FHIR R4 terminology server can be configured via `MATCHBOX_FHIR_CONTEXT_TXSERVER`. The server must include OMOP concept vocabularies; not all public FHIR servers do — tx.fhir.org, for example, may not have them.
 
-- **echidna** — a public [echidna.fhir.org](https://echidna.fhir.org) terminology service. Available free of charge with rate limits; no local vocabulary files required. API key authentication for higher limits is not currently supported in the matchbox txServer code path. The free tier enforces approximately 60 requests per minute; set `TRANSFORM_SLEEP=1` in the dqd container environment to throttle ETL calls accordingly.
+- **echidna** — a public [echidna.fhir.org](https://echidna.fhir.org) terminology service. Available free of charge with rate limits; no local vocabulary files required. API key authentication for higher limits is not currently supported in the matchbox txServer code path. The free tier enforces approximately 60 requests per minute; set `TRANSFORM_SLEEP=1` in the dqd container environment to throttle ETL calls accordingly. **Note:** echidna includes SNOMED CT content. Using it does not eliminate the SNOMED CT license requirement — users outside SNOMED International member countries still require a license whether vocabulary files are downloaded locally or accessed through a hosted server. See [NOTICES.md](https://github.com/croeder-fhir-to-omop/.github/blob/main/profile/NOTICES.md) for country-specific licensing details.
 
 - The default configuration uses locally loaded vocabularies obtained directly by the participant. Alternative terminology services may be used, but _users should review any applicable licensing requirements associated with the vocabularies being accessed._
 
