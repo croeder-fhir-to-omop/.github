@@ -8,6 +8,64 @@ Conversion operates at the level of individual FHIR resources. FHIR Bundles are 
 
 **enchilada** is a local FHIR terminology server backed by OMOP vocabulary files downloaded from Athena — it translates clinical codes (SNOMED, LOINC, RxNorm, etc.) to OMOP concept IDs. **matchbox** is a FHIR server with the OMOP Implementation Guide pre-loaded; it exposes a `$transform` operation for each StructureMap and calls enchilada at runtime to resolve codes. **matchbox_scripts** contains the Python transform functions and ETL script (`load_duckdb.py`) that drive FHIR fixtures through matchbox and write results into a DuckDB OMOP CDM 5.4 database. **dqd_docker** runs the full ETL automatically on startup, executes OHDSI Data Quality Dashboard checks, and serves results on two HTTP ports. **jupyter_docker** is the interactive alternative — same transform code, but with a Jupyter notebook interface for hands-on exploration.
 
+## Connectathon participant workflow
+
+### Before the event — download vocabulary files
+
+Vocabulary download from [Athena](https://athena.ohdsi.org) can be several GB and take 30+ minutes on a slow connection. **Do this before the event, not on the day.**
+
+1. Create a free account at [athena.ohdsi.org](https://athena.ohdsi.org)
+2. Select vocabulary bundles: SNOMED, ICD10CM, ICD9CM, RxNorm, LOINC, CVX, UCUM, Race
+3. Download and extract — you need `CONCEPT.csv` and `CONCEPT_RELATIONSHIP.csv`
+
+### Get running
+
+Place `CONCEPT.csv` and `CONCEPT_RELATIONSHIP.csv` in a working directory, then:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/croeder-fhir-to-omop/dqd_docker/main/docker-compose.yml | docker compose -f - up
+```
+
+On first run enchilada loads the vocabulary CSVs (~1–2 min) and matchbox loads the IG (~1 min). Both are cached in Docker volumes on subsequent starts.
+
+| URL | What you see |
+|---|---|
+| http://localhost:8088 | ETL report and unit test results |
+| http://localhost:3838 | OHDSI Data Quality Dashboard |
+
+### Modify StructureMaps or ConceptMaps
+
+Clone these repos **side by side** into the same directory, then edit `.fml` or `.fsh` files in `fhir-omop-ig/`:
+
+```bash
+git clone https://github.com/croeder-fhir-to-omop/fhir-omop-ig
+git clone https://github.com/croeder-fhir-to-omop/matchbox_docker
+git clone https://github.com/croeder-fhir-to-omop/matchbox_scripts
+cd matchbox_scripts
+python3 build.py ig docker restart etl
+```
+
+Results appear at http://localhost:8088.
+
+### Add or modify test data (FHIR fixtures)
+
+Drop FHIR resource JSON files into `matchbox_scripts/sample_fixtures_r5/`, named after the resource type (e.g. `condition_diabetes.json`, `observation_weight.json`). Then re-run the ETL:
+
+```bash
+cd matchbox_scripts
+python3 build.py restart etl
+```
+
+### Re-run after changes — quick reference
+
+| What changed | Command |
+|---|---|
+| StructureMap or ConceptMap (`.fml` / `.fsh`) | `python3 build.py ig docker restart etl` |
+| FHIR fixture (add or edit a JSON file) | `python3 build.py restart etl` |
+| matchbox Java source | `python3 build.py mvn docker restart etl` |
+
+For the full list of `build.py` steps and options, see the [matchbox_scripts README](https://github.com/croeder-fhir-to-omop/matchbox_scripts).
+
 ## DISCLAIMER
 The IG includes many precautions for dealing with PII in the data. This code makes no guarantee to do so. Do not use it with PII or PHI.
 
