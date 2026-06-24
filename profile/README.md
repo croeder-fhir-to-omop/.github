@@ -6,11 +6,11 @@ Conversion operates at the level of individual FHIR resources. FHIR Bundles are 
 
 ## How the pipeline fits together
 
-**enchilada** is a local FHIR terminology server backed by OMOP vocabulary files downloaded from Athena — it translates clinical codes (SNOMED, LOINC, RxNorm, etc.) to OMOP concept IDs. **matchbox** is a FHIR server with the OMOP Implementation Guide pre-loaded; it exposes a `$transform` operation for each StructureMap and calls enchilada at runtime to resolve codes. **matchbox_scripts** contains the Python transform functions and ETL script (`load_duckdb.py`) that drive FHIR fixtures through matchbox and write results into a DuckDB OMOP CDM 5.4 database. **dqd_docker** runs the full ETL automatically on startup, executes OHDSI Data Quality Dashboard checks, and serves results on two HTTP ports. **jupyter_docker** is the interactive alternative — same transform code, but with a Jupyter notebook interface for hands-on exploration.
+**enchilada** is a local FHIR terminology server backed by OMOP vocabulary files downloaded from Athena — it translates clinical codes (SNOMED, LOINC, RxNorm, etc.) to OMOP concept IDs. **matchbox** is a FHIR server with the OMOP Implementation Guide pre-loaded; it exposes a `$transform` operation for each StructureMap and calls enchilada at runtime to resolve codes. **matchbox_scripts** contains the Python transform functions and ETL script (`load_duckdb.py`) that drive FHIR test fixtures through matchbox and write results into a DuckDB OMOP CDM 5.4 database. **dqd_docker** runs the full ETL automatically on startup, executes OHDSI Data Quality Dashboard checks, and serves results on two HTTP ports. **jupyter_docker** is the interactive alternative — same transform code, but with a Jupyter notebook interface for hands-on exploration.
 
 ## Connectathon participant workflow
 
-The pipeline has three layers. At the bottom are source files in git repos: [FML](https://hl7.org/fhir/mapping-language.html) StructureMaps and [FSH](https://hl7.org/fhir/uv/shorthand/) ConceptMaps in `fhir-omop-ig/`, Python ETL scripts in `matchbox_scripts/`, and FHIR test data JSON files in `matchbox_scripts/sample_fixtures_r5/`. The middle layer is built artifacts: the IG publisher compiles FML/FSH into an IG package that is baked into the **matchbox** Docker image; the Python scripts and FHIR test data files are baked into the **dqd** Docker image. At the top is the running stack. Editing a source file has no effect until the affected image above it is rebuilt.
+The pipeline has three layers. At the bottom are source files in git repos: [FML](https://hl7.org/fhir/mapping-language.html) StructureMaps and [FSH](https://hl7.org/fhir/uv/shorthand/) ConceptMaps in `fhir-omop-ig/`, Python ETL scripts in `matchbox_scripts/`, and FHIR test fixtures (JSON files) in `matchbox_scripts/sample_fixtures_r5/`. The middle layer is built Docker images: the IG publisher compiles FML/FSH into an IG package baked into the **matchbox** image (the FHIR mapping server); the Python scripts and test fixtures are baked into the **dqd** image (the ETL and reporting container). At the top is the running stack. Editing a source file has no effect until the affected image above it is rebuilt.
 
 ### Before the event — download vocabulary files
 
@@ -22,6 +22,8 @@ Vocabulary download from [Athena](https://athena.ohdsi.org) can be several GB an
 
 ### Get running
 
+**Observers — just see the pipeline results:**
+
 Place `CONCEPT.csv` and `CONCEPT_RELATIONSHIP.csv` in a working directory, then:
 
 ```bash
@@ -30,6 +32,22 @@ curl -fsSL https://raw.githubusercontent.com/croeder-fhir-to-omop/dqd_docker/mai
 
 On first run enchilada loads the vocabulary CSVs (~1–2 min) and matchbox loads the IG (~1 min). Both are cached in Docker volumes on subsequent starts.
 
+**Developers — set up to modify StructureMaps or test fixtures:**
+
+If you plan to edit FML/FSH files or add test fixtures, stop the observer stack first if running (`docker compose down`), then clone the four repos **side by side** and start the dev stack. Place `CONCEPT.csv` and `CONCEPT_RELATIONSHIP.csv` in the parent directory before starting.
+
+```bash
+git clone https://github.com/croeder-fhir-to-omop/fhir-omop-ig
+git clone https://github.com/croeder-fhir-to-omop/matchbox_docker
+git clone https://github.com/croeder-fhir-to-omop/matchbox_scripts
+git clone https://github.com/croeder-fhir-to-omop/dqd_docker
+docker compose -f dqd_docker/docker-compose.yml -f dqd_docker/docker-compose.dev.yml up --build
+```
+
+`docker-compose.dev.yml` overrides the dqd container to build from your local `matchbox_scripts/` directory instead of pulling the published image, so local changes are picked up each time you rebuild. The initial build takes a few minutes — Docker Desktop's CPU graph shows progress as enchilada then matchbox start up.
+
+Both setups serve:
+
 | URL | What you see |
 |---|---|
 | http://localhost:8088 | ETL report and unit test results |
@@ -37,41 +55,36 @@ On first run enchilada loads the vocabulary CSVs (~1–2 min) and matchbox loads
 
 ### Modify StructureMaps or ConceptMaps
 
-StructureMaps are written in [FHIR Mapping Language (FML)](https://hl7.org/fhir/mapping-language.html) (`.fml` files) and ConceptMaps in [FHIR Shorthand (FSH)](https://hl7.org/fhir/uv/shorthand/) (`.fsh` files), both in `fhir-omop-ig/`. Editing them touches the bottom layer — you need to rebuild the IG package and then the matchbox image before the changes take effect in the running stack.
+StructureMaps are written in [FHIR Mapping Language (FML)](https://hl7.org/fhir/mapping-language.html) (`.fml` files) and ConceptMaps in [FHIR Shorthand (FSH)](https://hl7.org/fhir/uv/shorthand/) (`.fsh` files), both in `fhir-omop-ig/`. Editing them changes the bottom layer — the IG package and matchbox image both need to be rebuilt before changes take effect.
 
-Clone these repos **side by side** into the same directory, then edit the `.fml` or `.fsh` files:
+Edit the `.fml` or `.fsh` files, then from `matchbox_scripts/`:
 
 ```bash
-git clone https://github.com/croeder-fhir-to-omop/fhir-omop-ig
-git clone https://github.com/croeder-fhir-to-omop/matchbox_docker
-git clone https://github.com/croeder-fhir-to-omop/matchbox_scripts
-git clone https://github.com/croeder-fhir-to-omop/dqd_docker
-cd matchbox_scripts
 python3 build.py ig docker restart etl
 ```
 
-(`ig` rebuilds the IG package, `docker` rebuilds the matchbox image, `restart` wipes and restarts the stack, `etl` re-runs the transforms and opens the report.) Results appear at http://localhost:8088.
+`ig` rebuilds the IG package, `docker` rebuilds the matchbox image, `restart` wipes and restarts the stack, `etl` re-runs the transforms. The IG build and matchbox startup take a few minutes — Docker Desktop's CPU graph shows progress. Results appear at http://localhost:8088.
 
-### Add FHIR test data
+### Add FHIR test fixtures
 
-FHIR test data files are JSON files in `matchbox_scripts/sample_fixtures_r5/`. They are baked into the dqd image at build time, so adding a new file requires rebuilding the dqd image to take effect.
+FHIR test fixtures are JSON files in `matchbox_scripts/sample_fixtures_r5/`. They are baked into the dqd image at build time, so adding a new file requires rebuilding the dqd image.
 
-File names must match one of the glob patterns that the ETL pipeline recognizes — for example `condition_*.json`, `observation_*.json`, `patient.json`. The full list of patterns and the OMOP tables they write to is in the [matchbox_scripts README](https://github.com/croeder-fhir-to-omop/matchbox_scripts#sample-fixtures).
+File names must match one of the glob patterns the ETL pipeline recognizes — for example `condition_*.json`, `observation_*.json`, `patient.json`. The full list of patterns and the OMOP tables they write to is in the [matchbox_scripts README](https://github.com/croeder-fhir-to-omop/matchbox_scripts#sample-test-fixtures).
 
-After dropping your JSON file into `matchbox_scripts/sample_fixtures_r5/`, rebuild the dqd image from the parent directory (where all repos are cloned side by side):
+Drop your JSON file into `matchbox_scripts/sample_fixtures_r5/`, then from the parent directory:
 
 ```bash
 docker compose -f dqd_docker/docker-compose.yml -f dqd_docker/docker-compose.dev.yml up --build
 ```
 
-The container re-runs the ETL automatically on startup — results appear at http://localhost:8088.
+The container re-runs the ETL automatically on startup. Results appear at http://localhost:8088.
 
 ### Re-run after changes — quick reference
 
-| What changed | Layer affected | Command |
+| What changed | Layer rebuilt | Command (from parent directory) |
 |---|---|---|
 | FML StructureMap or FSH ConceptMap | matchbox image | `cd matchbox_scripts && python3 build.py ig docker restart etl` |
-| FHIR test data file | dqd image | `docker compose -f dqd_docker/docker-compose.yml -f dqd_docker/docker-compose.dev.yml up --build` |
+| FHIR test fixture | dqd image | `docker compose -f dqd_docker/docker-compose.yml -f dqd_docker/docker-compose.dev.yml up --build` |
 | Python ETL script | dqd image | `docker compose -f dqd_docker/docker-compose.yml -f dqd_docker/docker-compose.dev.yml up --build` |
 | matchbox Java source | matchbox image | `cd matchbox_scripts && python3 build.py mvn docker restart etl` |
 
@@ -97,7 +110,7 @@ This project uses clinical terminology content from LOINC (Regenstrief Institute
 | [fhir-omop-ig](https://github.com/croeder-fhir-to-omop/fhir-omop-ig) | HL7 FHIR-to-OMOP Implementation Guide — StructureMaps and ConceptMaps |
 | [matchbox](https://github.com/croeder-fhir-to-omop/matchbox) | FHIR validation and mapping server |
 | [matchbox_docker](https://github.com/croeder-fhir-to-omop/matchbox_docker) | Docker configuration for running matchbox |
-| [matchbox_scripts](https://github.com/croeder-fhir-to-omop/matchbox_scripts) | `transforms.py` (FHIR→OMOP via matchbox), `load_duckdb.py` (ETL into OMOP CDM 5.4), and sample FHIR fixtures |
+| [matchbox_scripts](https://github.com/croeder-fhir-to-omop/matchbox_scripts) | `transforms.py` (FHIR→OMOP via matchbox), `load_duckdb.py` (ETL into OMOP CDM 5.4), and sample FHIR test fixtures |
 | [jupyter_docker](https://github.com/croeder-fhir-to-omop/jupyter_docker) | Jupyter notebook environment for interactive FHIR→OMOP exploration |
 | [dqd_docker](https://github.com/croeder-fhir-to-omop/dqd_docker) | Runs the ETL then serves the OHDSI Data Quality Dashboard against the resulting OMOP CDM |
 | [enchilada](https://github.com/croeder-fhir-to-omop/enchilada) | Local OMOP-backed FHIR terminology server |
@@ -278,7 +291,7 @@ docker compose up
 The port 8088 index links to three reports:
 
 - **ETL report — test files**: results from `matchbox_scripts/test_files_r5/`, simple single-resource files (one per scenario) covering the happy path and basic edge cases for each StructureMap — no patient linking between files
-- **ETL report — sample fixtures**: results from `matchbox_scripts/sample_fixtures_r5/`, a patient-centric set with four synthetic patients (p1–p4) whose encounters, conditions, observations, and medications cross-reference each other; includes explicit negative cases (files suffixed `_NEG`) and issue-tracked edge cases (files referencing `f2o-xxx` issue numbers)
+- **ETL report — sample test fixtures**: results from `matchbox_scripts/sample_fixtures_r5/`, a patient-centric set with four synthetic patients (p1–p4) whose encounters, conditions, observations, and medications cross-reference each other; includes explicit negative cases (files suffixed `_NEG`) and issue-tracked edge cases (files referencing `f2o-xxx` issue numbers)
 - **Unit test report**: results from `matchbox_scripts/tests/test_r5_fml_transforms.py`, a pytest suite that calls matchbox's `$transform` endpoint directly and asserts specific OMOP field values — these are the primary correctness tests for the StructureMap implementations
 
 On first run, enchilada loads the vocabulary CSVs (~1–2 min) and matchbox loads the OMOP IG (~1 min). Both are cached in Docker volumes and skipped on subsequent starts.
@@ -371,7 +384,7 @@ docker compose down -v   # also remove volumes (fresh start)
 - **`build.py`** — the standard pipeline for the default r5/1.0.0 stack. Pass steps as arguments (`ig`, `mvn`, `docker`, `restart`, `etl`, `test`, `release`); no arguments runs the full pipeline.
 - **`build_profiles.py`** — the multi-stack variant with `--fhir-version r4|r5` and `--ig-version 1.0.0|1.0.1` flags. Use this when working with stacks other than the default, or when running multiple stacks in parallel via `dqd_docker/docker-compose.profiles.yml`.
 
-To edit transforms, ETL logic, or fixtures and see your changes live, clone `matchbox_scripts` alongside the compose repo and use the dev overlay:
+To edit transforms, ETL logic, or test fixtures and see your changes live, clone `matchbox_scripts` alongside the compose repo and use the dev overlay:
 
 ```bash
 git clone https://github.com/croeder-fhir-to-omop/matchbox_scripts
@@ -397,7 +410,7 @@ For full details on transforms, ETL logic, fixtures, IG development, and extendi
 1. **enchilada** serves OMOP vocabulary lookups over HTTPS using local Athena CSV files, acting as a FHIR terminology server for matchbox
 2. **matchbox** runs a FHIR server with the OMOP IG loaded, exposing a `$transform` operation for each of the 11 StructureMaps
 3. **matchbox_scripts/transforms.py** calls `$transform` for each FHIR resource type and returns OMOP-shaped dicts. Note: `MedicationStatement` is mapped to `drug_exposure`; `MedicationRequest` is intentionally out of scope as it represents a prescription order (an intention), not a completed act.
-4. **matchbox_scripts/load_duckdb.py** runs all transforms against the sample fixtures and writes results into a DuckDB OMOP CDM 5.4 database
+4. **matchbox_scripts/load_duckdb.py** runs all transforms against the sample test fixtures and writes results into a DuckDB OMOP CDM 5.4 database
 5. **jupyter_docker** imports `transforms.py` for interactive exploration — same code, human in the loop
 6. **dqd_docker** runs `load_duckdb.py` automatically on startup, runs OHDSI Data Quality Dashboard checks and unit tests, and serves results on port 3838 (DQD) and port 8088 (ETL reports, unit test report)
 
