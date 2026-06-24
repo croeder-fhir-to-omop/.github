@@ -10,6 +10,8 @@ Conversion operates at the level of individual FHIR resources. FHIR Bundles are 
 
 ## Connectathon participant workflow
 
+The pipeline has three layers. At the bottom are source files in git repos: [FML](https://hl7.org/fhir/mapping-language.html) StructureMaps and [FSH](https://hl7.org/fhir/uv/shorthand/) ConceptMaps in `fhir-omop-ig/`, Python ETL scripts in `matchbox_scripts/`, and FHIR test data JSON files in `matchbox_scripts/sample_fixtures_r5/`. The middle layer is built artifacts: the IG publisher compiles FML/FSH into an IG package that is baked into the **matchbox** Docker image; the Python scripts and FHIR test data files are baked into the **dqd** Docker image. At the top is the running stack. Editing a source file has no effect until the affected image above it is rebuilt.
+
 ### Before the event — download vocabulary files
 
 Vocabulary download from [Athena](https://athena.ohdsi.org) can be several GB and take 30+ minutes on a slow connection. **Do this before the event, not on the day.**
@@ -35,34 +37,43 @@ On first run enchilada loads the vocabulary CSVs (~1–2 min) and matchbox loads
 
 ### Modify StructureMaps or ConceptMaps
 
-Clone these repos **side by side** into the same directory, then edit `.fml` or `.fsh` files in `fhir-omop-ig/`:
+StructureMaps are written in [FHIR Mapping Language (FML)](https://hl7.org/fhir/mapping-language.html) (`.fml` files) and ConceptMaps in [FHIR Shorthand (FSH)](https://hl7.org/fhir/uv/shorthand/) (`.fsh` files), both in `fhir-omop-ig/`. Editing them touches the bottom layer — you need to rebuild the IG package and then the matchbox image before the changes take effect in the running stack.
+
+Clone these repos **side by side** into the same directory, then edit the `.fml` or `.fsh` files:
 
 ```bash
 git clone https://github.com/croeder-fhir-to-omop/fhir-omop-ig
 git clone https://github.com/croeder-fhir-to-omop/matchbox_docker
 git clone https://github.com/croeder-fhir-to-omop/matchbox_scripts
+git clone https://github.com/croeder-fhir-to-omop/dqd_docker
 cd matchbox_scripts
 python3 build.py ig docker restart etl
 ```
 
-Results appear at http://localhost:8088.
+(`ig` rebuilds the IG package, `docker` rebuilds the matchbox image, `restart` wipes and restarts the stack, `etl` re-runs the transforms and opens the report.) Results appear at http://localhost:8088.
 
-### Add or modify test data (FHIR fixtures)
+### Add FHIR test data
 
-Drop FHIR resource JSON files into `matchbox_scripts/sample_fixtures_r5/`, named after the resource type (e.g. `condition_diabetes.json`, `observation_weight.json`). Then re-run the ETL:
+FHIR test data files are JSON files in `matchbox_scripts/sample_fixtures_r5/`. They are baked into the dqd image at build time, so adding a new file requires rebuilding the dqd image to take effect.
+
+File names must match one of the glob patterns that the ETL pipeline recognizes — for example `condition_*.json`, `observation_*.json`, `patient.json`. The full list of patterns and the OMOP tables they write to is in the [matchbox_scripts README](https://github.com/croeder-fhir-to-omop/matchbox_scripts#sample-fixtures).
+
+After dropping your JSON file into `matchbox_scripts/sample_fixtures_r5/`, rebuild the dqd image from the parent directory (where all repos are cloned side by side):
 
 ```bash
-cd matchbox_scripts
-python3 build.py restart etl
+docker compose -f dqd_docker/docker-compose.yml -f dqd_docker/docker-compose.dev.yml up --build
 ```
+
+The container re-runs the ETL automatically on startup — results appear at http://localhost:8088.
 
 ### Re-run after changes — quick reference
 
-| What changed | Command |
-|---|---|
-| StructureMap or ConceptMap (`.fml` / `.fsh`) | `python3 build.py ig docker restart etl` |
-| FHIR fixture (add or edit a JSON file) | `python3 build.py restart etl` |
-| matchbox Java source | `python3 build.py mvn docker restart etl` |
+| What changed | Layer affected | Command |
+|---|---|---|
+| FML StructureMap or FSH ConceptMap | matchbox image | `cd matchbox_scripts && python3 build.py ig docker restart etl` |
+| FHIR test data file | dqd image | `docker compose -f dqd_docker/docker-compose.yml -f dqd_docker/docker-compose.dev.yml up --build` |
+| Python ETL script | dqd image | `docker compose -f dqd_docker/docker-compose.yml -f dqd_docker/docker-compose.dev.yml up --build` |
+| matchbox Java source | matchbox image | `cd matchbox_scripts && python3 build.py mvn docker restart etl` |
 
 For the full list of `build.py` steps and options, see the [matchbox_scripts README](https://github.com/croeder-fhir-to-omop/matchbox_scripts).
 
