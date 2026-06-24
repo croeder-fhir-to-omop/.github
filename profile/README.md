@@ -234,7 +234,7 @@ All images are published to Docker Hub. No git repository clones are needed to r
 
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) (or Docker + Docker Compose v2)
   - macOS: Apple Silicon or Intel
-  - Windows 10 (version 1903 or later) or Windows 11 — Docker Desktop's installer enables WSL2 automatically
+  - Windows 10 (version 1903 or later) or Windows 11 — Docker Desktop requires WSL2 as its backend. WSL2 is not pre-installed by default on Windows; Docker Desktop's installer will enable it automatically if it isn't already present.
   - Linux: Docker Engine + Docker Compose v2
 - **RAM**: 16GB minimum. Docker Desktop's memory limit (Settings → Resources) should be at least 12GB.
 - **Disk**: 10GB free space for images and data volumes.
@@ -401,7 +401,7 @@ docker compose -f dqd_docker/docker-compose.yml \
 
 All repos must be cloned **side by side into the same parent directory** when developing.
 
-**Windows:** Use a WSL2 terminal — the `${HOME}` path in the Jupyter dev overlay's volume mount requires it.
+**Windows:** Use PowerShell. The Jupyter dev overlay uses relative volume paths (no `${HOME}` dependency), so repos only need to be cloned side by side as described above.
 
 For full details on transforms, ETL logic, fixtures, IG development, and extending the conversion engine, see the [matchbox_scripts README](https://github.com/croeder-fhir-to-omop/matchbox_scripts).
 
