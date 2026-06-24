@@ -90,3 +90,17 @@ Source: https://www.cdc.gov/phin/php/phinvads/
 ## OMOP Vocabulary (Athena)
 
 The OMOP concept identifiers used in this project are drawn from the OMOP Standardized Vocabularies, distributed by the OHDSI community via [Athena](https://athena.ohdsi.org). Individual vocabularies within Athena carry their own license terms (see above). Users must accept the Athena terms of use and the applicable vocabulary licenses before downloading vocabulary files.
+
+---
+
+## Echidna Terminology Service
+
+[echidna.fhir.org](https://echidna.fhir.org) is a hosted FHIR terminology service operated by Echidna Systems. It provides OMOP Standardized Vocabularies translated to FHIR format and is recognized by both the HL7 and OHDSI communities.
+
+Use of the echidna API is subject to Echidna Systems' [terms of use](https://echidna.fhir.org/terms/). Key restrictions:
+
+- **Personal use only** — commercial use of the OMOP terminology data provided by echidna is explicitly prohibited.
+- **No redistribution** — users must not license, resell, distribute, or provide access to echidna data to any third party without written consent from Echidna Systems.
+- **Underlying licenses apply** — users must comply with the Athena OHDSI terms of use and all applicable vocabulary licenses, including SNOMED CT (see above). Accessing SNOMED CT content through echidna does not substitute for a SNOMED CT license in countries where one is required.
+
+This project uses echidna as an optional alternative to the local enchilada terminology server. The restrictions above apply to users who configure echidna as the terminology server (`MATCHBOX_FHIR_CONTEXT_TXSERVER=https://echidna.fhir.org/r4`).
