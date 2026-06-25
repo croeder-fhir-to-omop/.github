@@ -159,6 +159,23 @@ curl -fsSL https://raw.githubusercontent.com/croeder-fhir-to-omop/dqd_docker/mai
 
 To use a different tag when you have the compose file locally, set `MATCHBOX_IMAGE` in a `.env` file alongside it.
 
+### Building and publishing images
+
+Requires `fhir-omop-ig`, `matchbox_docker`, and `matchbox_scripts` cloned side by side. From `matchbox_scripts/`:
+
+```bash
+# Publish croeder/matchbox:latest (upstream HL7 IG)
+python3 build.py ig docker release
+
+# Publish croeder/matchbox:main (fork's main branch)
+python3 build.py --ig-source main ig docker release
+
+# Publish croeder/matchbox:<branch> (any fork branch)
+python3 build.py --ig-source <branch> ig docker release
+```
+
+`ig` compiles the IG from the specified source, `docker` builds the matchbox image locally, `release` pushes it to Docker Hub. Always run `docker compose down -v` before switching to a newly published image so matchbox reloads the IG fresh from the new image rather than the cached volume.
+
 To see which IG source and commit a local or pulled image was built from:
 
 ```bash
