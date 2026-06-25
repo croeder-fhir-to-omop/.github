@@ -47,6 +47,14 @@ HL7 terminology content is used under the HL7 International IP Policy. See https
 
 ---
 
+## HL7 FHIR-to-OMOP Implementation Guide
+
+The StructureMaps and ConceptMaps used in this project are derived from the [HL7 FHIR-to-OMOP Implementation Guide](https://hl7.org/fhir/uv/omop/), an HL7 International work product developed in collaboration with the OHDSI community. The IG is copyright © Health Level Seven International. All rights reserved.
+
+The IG content is used and distributed in this project under the HL7 International IP Policy. Implementations may freely use the IG for conformance purposes; redistribution of modified IG content requires compliance with that policy. See https://www.hl7.org/legal/ippolicy.cfm for terms.
+
+---
+
 ## UCUM
 
 The Unified Code for Units of Measure (UCUM) is copyright © 1998–2026 Regenstrief Institute, Inc. All rights reserved.
@@ -71,9 +79,17 @@ Source: https://www.cdc.gov/nchs/icd/icd-10-cm.htm
 
 ---
 
+## ICD-9-CM
+
+ICD-9-CM is published by the CDC National Center for Health Statistics (NCHS). As a work of the United States Government, ICD-9-CM content is in the public domain within the United States.
+
+Source: https://www.cdc.gov/nchs/icd/icd9.htm
+
+---
+
 ## RxNorm
 
-RxNorm is produced by the National Library of Medicine (NLM). As a work of the United States Government, RxNorm content is in the public domain within the United States. RxNorm includes content from SNOMED CT (see above) and other sources that may carry their own licensing terms.
+RxNorm is produced by the National Library of Medicine (NLM). As a work of the United States Government, RxNorm content is in the public domain within the United States. RxNorm includes content from SNOMED CT (see above) and other sources that may carry their own licensing terms. Users outside SNOMED International member countries who access RxNorm through Athena or a hosted terminology server such as echidna are indirectly accessing SNOMED CT content and the SNOMED CT license requirement still applies.
 
 Source: https://www.nlm.nih.gov/research/umls/rxnorm/
 
@@ -90,6 +106,14 @@ Source: https://www.cdc.gov/phin/php/phinvads/
 ## OMOP Vocabulary (Athena)
 
 The OMOP concept identifiers used in this project are drawn from the OMOP Standardized Vocabularies, distributed by the OHDSI community via [Athena](https://athena.ohdsi.org). Individual vocabularies within Athena carry their own license terms (see above). Users must accept the Athena terms of use and the applicable vocabulary licenses before downloading vocabulary files.
+
+---
+
+## OHDSI Data Quality Dashboard
+
+The [OHDSI Data Quality Dashboard](https://github.com/OHDSI/DataQualityDashboard) (DQD) is used in `dqd_docker` to run automated data quality checks against the OMOP CDM database produced by this pipeline. DQD is copyright © OHDSI and is licensed under the [Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0).
+
+With thanks to Katie, the author, and the OHDSI community for building and maintaining this tool.
 
 ---
 
