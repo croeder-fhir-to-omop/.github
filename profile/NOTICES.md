@@ -113,7 +113,7 @@ The OMOP concept identifiers used in this project are drawn from the OMOP Standa
 
 The [OHDSI Data Quality Dashboard](https://github.com/OHDSI/DataQualityDashboard) (DQD) is used in `dqd_docker` to run automated data quality checks against the OMOP CDM database produced by this pipeline. DQD is copyright © OHDSI and is licensed under the [Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0).
 
-With thanks to Katie, the author, and the OHDSI community for building and maintaining this tool.
+With thanks to Katy Sadowski, the author, and the OHDSI community for building and maintaining this tool.
 
 ---
 
