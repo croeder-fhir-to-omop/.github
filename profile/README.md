@@ -127,13 +127,15 @@ This project uses clinical terminology content from LOINC (Regenstrief Institute
 
 ## Docker Images
 
-The matchbox image is published to Docker Hub under `croeder/matchbox`. Tags reflect which IG source was used at build time:
+Images are published to Docker Hub under `croeder/matchbox` and `croeder/dqd`. Tags reflect which IG source was used at build time:
 
 | Tag | IG Source |
 |---|---|
-| `croeder/matchbox:latest` | [`HL7/fhir-omop-ig`](https://github.com/HL7/fhir-omop-ig) `main` — the official upstream release |
-| `croeder/matchbox:main` | [`croeder-fhir-to-omop/fhir-omop-ig`](https://github.com/croeder-fhir-to-omop/fhir-omop-ig) `main` — this organization's fork |
-| `croeder/matchbox:<branch>` | `croeder-fhir-to-omop/fhir-omop-ig` branch `<branch>` |
+| `:latest` | [`HL7/fhir-omop-ig`](https://github.com/HL7/fhir-omop-ig) `main` — the official upstream release |
+| `:main` | [`croeder-fhir-to-omop/fhir-omop-ig`](https://github.com/croeder-fhir-to-omop/fhir-omop-ig) `main` — this organization's fork |
+| `:<branch>` | `croeder-fhir-to-omop/fhir-omop-ig` branch `<branch>` |
+
+Both `croeder/matchbox` and `croeder/dqd` carry the same tag — you should always set them together so the StructureMaps in matchbox and the ETL code/fixtures in dqd are from the same source.
 
 To run with the upstream HL7 IG (`:latest`):
 
@@ -145,9 +147,8 @@ curl -fsSL https://raw.githubusercontent.com/croeder-fhir-to-omop/dqd_docker/mai
 To run with the fork's main (`:main`):
 
 ```bash
-export MATCHBOX_IMAGE=croeder/matchbox:main
 curl -fsSL https://raw.githubusercontent.com/croeder-fhir-to-omop/dqd_docker/main/docker-compose.yml \
-  | docker compose -f - up
+  | MATCHBOX_IMAGE=croeder/matchbox:main DQD_IMAGE=croeder/dqd:main docker compose -f - up
 ```
 
 To stop and wipe volumes before switching images (forces matchbox to reload the IG from scratch):
@@ -157,7 +158,12 @@ curl -fsSL https://raw.githubusercontent.com/croeder-fhir-to-omop/dqd_docker/mai
   | docker compose -f - down -v
 ```
 
-To use a different tag when you have the compose file locally, set `MATCHBOX_IMAGE` in a `.env` file alongside it.
+To use a different tag when you have the compose file locally, set `MATCHBOX_IMAGE` and `DQD_IMAGE` in a `.env` file alongside it:
+
+```
+MATCHBOX_IMAGE=croeder/matchbox:main
+DQD_IMAGE=croeder/dqd:main
+```
 
 To see which IG source and commit a local or pulled image was built from:
 
