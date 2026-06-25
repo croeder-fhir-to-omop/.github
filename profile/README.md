@@ -28,8 +28,14 @@ Vocabulary download from [Athena](https://athena.ohdsi.org) can be several GB an
 
 Place `CONCEPT.csv` and `CONCEPT_RELATIONSHIP.csv` in a working directory, then:
 
+macOS / Linux / Git Bash:
 ```bash
 curl -fsSL https://raw.githubusercontent.com/croeder-fhir-to-omop/dqd_docker/main/docker-compose.yml | docker compose -f - up
+```
+
+PowerShell (Windows 10/11 — note `curl.exe`, not `curl`):
+```powershell
+curl.exe -fsSL https://raw.githubusercontent.com/croeder-fhir-to-omop/dqd_docker/main/docker-compose.yml | docker compose -f - up
 ```
 
 On first run enchilada loads the vocabulary CSVs (~1–2 min) and matchbox loads the IG (~1 min). Both are cached in Docker volumes on subsequent starts.
