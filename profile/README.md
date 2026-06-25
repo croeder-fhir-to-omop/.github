@@ -157,7 +157,7 @@ curl -fsSL https://raw.githubusercontent.com/croeder-fhir-to-omop/dqd_docker/mai
   | docker compose -f - down -v
 ```
 
-To use a different tag when you have the compose file locally, set `MATCHBOX_IMAGE` in a `.env` file alongside it.
+To use a different tag when you have the docker compose file locally, set `MATCHBOX_IMAGE` in a `.env` file alongside it.
 
 ### Building and publishing images
 
@@ -266,7 +266,7 @@ All images are published to Docker Hub. No git repository clones are needed to r
 - **RAM**: 16GB minimum. Docker Desktop's memory limit (Settings → Resources) should be at least 12GB.
 - **Disk**: 10GB free space for images and data volumes.
 
-> **Note:** Docker Hub shows a "Run in Docker Desktop" button on each image page (`croeder/enchilada`, `croeder/matchbox`, `croeder/dqd`, `croeder/jupyter`). Avoid it — it starts only that one container in isolation, leaving the other services unreachable. The pipeline requires two services running together with shared networking, which only the compose file provides. Use the `curl` commands below instead.
+> **Note:** Docker Hub shows a "Run in Docker Desktop" button on each image page (`croeder/enchilada`, `croeder/matchbox`, `croeder/dqd`, `croeder/jupyter`). Avoid it — it starts only that one container in isolation, leaving the other services unreachable. The pipeline requires two services running together with shared networking, which only the docker compose file provides. Use the `curl` commands below instead.
 
 ### Option A — Automated ETL + Data Quality Dashboard
 
@@ -305,7 +305,7 @@ CONCEPT_RELATIONSHIP_CSV=/path/to/CONCEPT_RELATIONSHIP.csv \
 curl -fsSL https://raw.githubusercontent.com/croeder-fhir-to-omop/dqd_docker/main/docker-compose.yml | docker compose -f - up
 ```
 
-Or download the compose file first if you want to keep or edit it:
+Or download the docker compose file first if you want to keep or edit it:
 
 ```bash
 curl -O https://raw.githubusercontent.com/croeder-fhir-to-omop/dqd_docker/main/docker-compose.yml
