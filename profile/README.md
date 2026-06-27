@@ -42,7 +42,7 @@ On first run enchilada loads the vocabulary CSVs (~1–2 min) and matchbox loads
 
 **Developers — set up to modify StructureMaps or test fixtures:**
 
-If you plan to edit FML/FSH files or add test fixtures, stop the observer stack first if running (`docker compose down`), then clone the four repos **side by side** and start the dev stack. Place `CONCEPT.csv` and `CONCEPT_RELATIONSHIP.csv` in the parent directory before starting.
+If you plan to edit FML/FSH files or add test fixtures, stop the observer stack first if running (`docker compose down`), then clone the four repos **side by side** and start the dev stack. Place `CONCEPT.csv` and `CONCEPT_RELATIONSHIP.csv` in a `data/` subdirectory of the parent — i.e., `fhir-to-omop-docker/data/CONCEPT.csv`. The `dqd_docker/CONCEPT.csv` and `dqd_docker/CONCEPT_RELATIONSHIP.csv` entries are symlinks that resolve there.
 
 ```bash
 git clone https://github.com/croeder-fhir-to-omop/fhir-omop-ig
