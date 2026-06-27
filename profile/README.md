@@ -68,10 +68,10 @@ StructureMaps are written in [FHIR Mapping Language (FML)](https://hl7.org/fhir/
 Edit the `.fml` or `.fsh` files, then from `matchbox_scripts/`:
 
 ```bash
-python3 build.py ig docker restart etl
+python3 build.py run local
 ```
 
-`ig` rebuilds the IG package, `docker` rebuilds the matchbox image, `restart` wipes and restarts the stack, `etl` re-runs the transforms. The IG build and matchbox startup take a few minutes — Docker Desktop's CPU graph shows progress. Results appear at http://localhost:8088.
+`run local` detects that `fhir-omop-ig` has local changes, rebuilds the IG package and the matchbox image, wipes and restarts the stack, and re-runs the transforms. The IG build and matchbox startup take a few minutes — Docker Desktop's CPU graph shows progress. Results appear at http://localhost:8088.
 
 ### Add FHIR test fixtures
 
@@ -79,22 +79,22 @@ FHIR test fixtures are JSON files in `matchbox_scripts/sample_fixtures_r5/`. The
 
 File names must match one of the glob patterns the ETL pipeline recognizes — for example `condition_*.json`, `observation_*.json`, `patient.json`. The full list of patterns and the OMOP tables they write to is in the [matchbox_scripts README](https://github.com/croeder-fhir-to-omop/matchbox_scripts#sample-test-fixtures).
 
-Drop your JSON file into `matchbox_scripts/sample_fixtures_r5/`, then from the parent directory:
+Drop your JSON file into `matchbox_scripts/sample_fixtures_r5/`, then from `matchbox_scripts/`:
 
 ```bash
-docker compose -f dqd_docker/docker-compose.yml -f dqd_docker/docker-compose.dev.yml up --build
+python3 build.py run local
 ```
 
-The container re-runs the ETL automatically on startup. Results appear at http://localhost:8088.
+`run local` detects the local changes under `matchbox_scripts/`, rebuilds the dqd image, and restarts the stack. The container re-runs the ETL automatically on startup. Results appear at http://localhost:8088.
 
 ### Re-run after changes — quick reference
 
-| What changed | Layer rebuilt | Command (from parent directory) |
+| What changed | Layer rebuilt | Command (from `matchbox_scripts/`) |
 |---|---|---|
-| FML StructureMap or FSH ConceptMap | matchbox image | `cd matchbox_scripts && python3 build.py ig docker restart etl` |
-| FHIR test fixture | dqd image | `docker compose -f dqd_docker/docker-compose.yml -f dqd_docker/docker-compose.dev.yml up --build` |
-| Python ETL script | dqd image | `docker compose -f dqd_docker/docker-compose.yml -f dqd_docker/docker-compose.dev.yml up --build` |
-| matchbox Java source | matchbox image | `cd matchbox_scripts && python3 build.py mvn docker restart etl` |
+| FML StructureMap or FSH ConceptMap | matchbox image | `python3 build.py run local` |
+| FHIR test fixture | dqd image | `python3 build.py run local` |
+| Python ETL script | dqd image | `python3 build.py run local` |
+| matchbox Java source | matchbox image | `python3 build.py run local` |
 
 For the full list of `build.py` steps and options, see the [matchbox_scripts README](https://github.com/croeder-fhir-to-omop/matchbox_scripts).
 
@@ -175,6 +175,8 @@ python3 build.py --ig-source <branch> ig docker release
 ```
 
 `ig` compiles the IG from the specified source, `docker` builds the matchbox image locally, `release` pushes it to Docker Hub. Always run `docker compose down -v` before switching to a newly published image so matchbox reloads the IG fresh from the new image rather than the cached volume.
+
+To build from a source and run the stack **without** publishing, use the task commands instead: `python3 build.py run upstream` rebuilds from HL7 upstream `main`, and `python3 build.py run <branch>` rebuilds `fhir-omop-ig` from the named branch. Both restart the stack and run the ETL with the freshly built images.
 
 To see which IG source and commit a local or pulled image was built from:
 
@@ -423,9 +425,8 @@ git clone https://github.com/croeder-fhir-to-omop/jupyter_docker   # or dqd_dock
 docker compose -f jupyter_docker/docker-compose.yml \
                -f jupyter_docker/docker-compose.dev.yml up
 
-# DQD — scripts are baked in at build time; --build picks up changes
-docker compose -f dqd_docker/docker-compose.yml \
-               -f dqd_docker/docker-compose.dev.yml up --build
+# DQD — scripts are baked in at build time; run local rebuilds and restarts
+cd matchbox_scripts && python3 build.py run local
 ```
 
 All repos must be cloned **side by side into the same parent directory** when developing.
