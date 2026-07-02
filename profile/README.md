@@ -335,7 +335,7 @@ enchilada runs over HTTPS with a self-signed certificate. The matchbox image inc
 
 **Hosted/cloud** — any FHIR R4 terminology server can be configured via `MATCHBOX_FHIR_CONTEXT_TXSERVER`. The server must include OMOP concept vocabularies; not all public FHIR servers do — tx.fhir.org, for example, may not have them.
 
-- **echidna** — a public [echidna.fhir.org](https://echidna.fhir.org) terminology service operated by Echidna Systems. Available free of charge with rate limits; no local vocabulary files required. API key authentication for higher limits is not currently supported in the matchbox txServer code path. The free tier enforces approximately 60 requests per minute; set `TRANSFORM_SLEEP=1` in the dqd container environment to throttle ETL calls accordingly. **Note:** echidna's [terms of use](https://echidna.fhir.org/terms/) restrict access to personal use and explicitly prohibit commercial use of the OMOP vocabulary data it provides. Users must not redistribute echidna data to third parties. echidna includes SNOMED CT content — using it does not eliminate the SNOMED CT license requirement for users outside SNOMED International member countries. See [NOTICES.md](https://github.com/croeder-fhir-to-omop/.github/blob/main/profile/NOTICES.md) for details.
+- **echidna** — a public FHIR terminology service operated by Echidna Systems ([echidna.fhir.org](https://echidna.fhir.org)); no local vocabulary files required. See echidna's [terms of use](https://echidna.fhir.org/terms/) for current access conditions.
 
 - The default configuration uses locally loaded vocabularies obtained directly by the participant. Alternative terminology services may be used, but _users should review any applicable licensing requirements associated with the vocabularies being accessed._
 
@@ -343,7 +343,7 @@ To use a hosted server, set the terminology server URL when starting:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/croeder-fhir-to-omop/dqd_docker/main/docker-compose.yml \
-  | MATCHBOX_FHIR_CONTEXT_TXSERVER=https://echidna.fhir.org/r4 TRANSFORM_SLEEP=1 docker compose -f - up
+  | MATCHBOX_FHIR_CONTEXT_TXSERVER=https://echidna.fhir.org/r4 docker compose -f - up
 ```
 
 Or if you have the compose file locally:

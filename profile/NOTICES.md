@@ -89,7 +89,7 @@ Source: https://www.cdc.gov/nchs/icd/icd9.htm
 
 ## RxNorm
 
-RxNorm is produced by the National Library of Medicine (NLM). As a work of the United States Government, RxNorm content is in the public domain within the United States. RxNorm includes content from SNOMED CT (see above) and other sources that may carry their own licensing terms. Users outside SNOMED International member countries who access RxNorm through Athena or a hosted terminology server such as echidna are indirectly accessing SNOMED CT content and the SNOMED CT license requirement still applies.
+RxNorm is produced by the National Library of Medicine (NLM). As a work of the United States Government, RxNorm content is in the public domain within the United States. RxNorm includes content from SNOMED CT (see above) and other sources that may carry their own licensing terms. Users outside SNOMED International member countries who access RxNorm through Athena or any hosted terminology server are indirectly accessing SNOMED CT content and the SNOMED CT license requirement still applies.
 
 Source: https://www.nlm.nih.gov/research/umls/rxnorm/
 
@@ -114,17 +114,3 @@ The OMOP concept identifiers used in this project are drawn from the OMOP Standa
 The [OHDSI Data Quality Dashboard](https://github.com/OHDSI/DataQualityDashboard) (DQD) is used in `dqd_docker` to run automated data quality checks against the OMOP CDM database produced by this pipeline. DQD is copyright © OHDSI and is licensed under the [Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0).
 
 With thanks to Katy Sadowski, the author, and the OHDSI community for building and maintaining this tool.
-
----
-
-## Echidna Terminology Service
-
-[echidna.fhir.org](https://echidna.fhir.org) is a hosted FHIR terminology service operated by Echidna Systems. It provides OMOP Standardized Vocabularies translated to FHIR format and is recognized by both the HL7 and OHDSI communities.
-
-Use of the echidna API is subject to Echidna Systems' [terms of use](https://echidna.fhir.org/terms/). Key restrictions:
-
-- **Personal use only** — commercial use of the OMOP terminology data provided by echidna is explicitly prohibited.
-- **No redistribution** — users must not license, resell, distribute, or provide access to echidna data to any third party without written consent from Echidna Systems.
-- **Underlying licenses apply** — users must comply with the Athena OHDSI terms of use and all applicable vocabulary licenses, including SNOMED CT (see above). Accessing SNOMED CT content through echidna does not substitute for a SNOMED CT license in countries where one is required.
-
-This project uses echidna as an optional alternative to the local enchilada terminology server. The restrictions above apply to users who configure echidna as the terminology server (`MATCHBOX_FHIR_CONTEXT_TXSERVER=https://echidna.fhir.org/r4`).
