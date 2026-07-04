@@ -132,10 +132,10 @@ docker compose down      # keep volumes (fast restart — vocabulary cache prese
 docker compose down -v   # also remove volumes (full reload on next start)
 ```
 
-> **Switching matchbox images:** run `docker compose down -v` before changing `MATCHBOX_IMAGE`, or the old IG will be reused from the cached volume. If volumes persist, find and remove them manually. Docker compose names volumes using the directory you ran it from as a prefix — if you ran from a directory called `mydata`, your volumes will be `mydata_enchilada-db`, `mydata_matchbox-db`, and `mydata_omop-db`:
+> **Switching matchbox images:** run `docker compose down -v` before changing `MATCHBOX_IMAGE`, or the old IG will be reused from the cached volume. If volumes persist, find and remove them manually. The compose file sets `name: dqd_docker`, so the volume prefix is always `dqd_docker` — regardless of which directory you run the curl command from:
 > ```bash
 > docker volume ls
-> docker volume rm <dir>_enchilada-db <dir>_matchbox-db <dir>_omop-db
+> docker volume rm dqd_docker_enchilada-db dqd_docker_matchbox-db dqd_docker_omop-db
 > ```
 >
 > When developing with the repos cloned side by side, `python3 build.py down` tears down the stack and removes all three volumes for you.
