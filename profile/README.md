@@ -62,25 +62,25 @@ Place `CONCEPT.csv` and `CONCEPT_RELATIONSHIP.csv` in a working directory, then:
 
 macOS / Linux / Git Bash:
 ```bash
-curl -fsSL https://raw.githubusercontent.com/croeder-fhir-to-omop/dqd_docker/main/docker-compose.yml | docker compose -f - up
+curl -fsSL https://raw.githubusercontent.com/croeder-fhir-to-omop/dqd_docker/main/docker-compose.r4-1.0.0.yml | docker compose -f - up
 ```
 
 PowerShell (Windows 10/11 — note `curl.exe`, not `curl`):
 ```powershell
-curl.exe -fsSL https://raw.githubusercontent.com/croeder-fhir-to-omop/dqd_docker/main/docker-compose.yml | docker compose -f - up
+curl.exe -fsSL https://raw.githubusercontent.com/croeder-fhir-to-omop/dqd_docker/main/docker-compose.r4-1.0.0.yml | docker compose -f - up
 ```
 
 If your vocabulary files are not in the current directory:
 ```bash
 CONCEPT_CSV=/path/to/CONCEPT.csv \
 CONCEPT_RELATIONSHIP_CSV=/path/to/CONCEPT_RELATIONSHIP.csv \
-curl -fsSL https://raw.githubusercontent.com/croeder-fhir-to-omop/dqd_docker/main/docker-compose.yml | docker compose -f - up
+curl -fsSL https://raw.githubusercontent.com/croeder-fhir-to-omop/dqd_docker/main/docker-compose.r4-1.0.0.yml | docker compose -f - up
 ```
 
 Or download the docker compose file first if you want to keep or edit it:
 ```bash
-curl -O https://raw.githubusercontent.com/croeder-fhir-to-omop/dqd_docker/main/docker-compose.yml
-docker compose up
+curl -O https://raw.githubusercontent.com/croeder-fhir-to-omop/dqd_docker/main/docker-compose.r4-1.0.0.yml
+docker compose -f docker-compose.r4-1.0.0.yml up
 ```
 
 On first run, enchilada loads the vocabulary CSVs (~1–2 min) and matchbox loads the OMOP IG (~1 min). Both are cached in Docker volumes and skipped on subsequent starts.
@@ -94,9 +94,9 @@ Once up, the stack serves:
 
 The port 8088 index links to three reports:
 
-- **ETL report — test files**: results from `matchbox_scripts/test_files_r5/`, simple single-resource files (one per scenario) covering the happy path and basic edge cases for each StructureMap — no patient linking between files
-- **ETL report — sample test fixtures**: results from `matchbox_scripts/sample_fixtures_r5/`, a patient-centric set with four synthetic patients (p1–p4) whose encounters, conditions, observations, and medications cross-reference each other; includes explicit negative cases (files suffixed `_NEG`) and issue-tracked edge cases (files referencing `f2o-xxx` issue numbers)
-- **Unit test report**: results from `matchbox_scripts/tests/test_r5_fml_transforms.py`, a pytest suite that calls matchbox's `$transform` endpoint directly and asserts specific OMOP field values — these are the primary correctness tests for the StructureMap implementations
+- **ETL report — test files**: results from `matchbox_scripts/test_files_r4/`, simple single-resource files (one per scenario) covering the happy path and basic edge cases for each StructureMap — no patient linking between files
+- **ETL report — sample test fixtures**: results from `matchbox_scripts/sample_fixtures_r4/`, a patient-centric set with four synthetic patients (p1–p4) whose encounters, conditions, observations, and medications cross-reference each other; includes explicit negative cases (files suffixed `_NEG`) and issue-tracked edge cases (files referencing `f2o-xxx` issue numbers)
+- **Unit test report**: results from `matchbox_scripts/tests/test_r4_fml_transforms.py`, a pytest suite that calls matchbox's `$transform` endpoint directly and asserts specific OMOP field values — these are the primary correctness tests for the StructureMap implementations
 
 ### Option B — Interactive Jupyter Notebooks
 
@@ -157,7 +157,7 @@ enchilada runs over HTTPS with a self-signed certificate. The matchbox image inc
 
 To use a hosted server, set the terminology server URL when starting:
 ```bash
-curl -fsSL https://raw.githubusercontent.com/croeder-fhir-to-omop/dqd_docker/main/docker-compose.yml \
+curl -fsSL https://raw.githubusercontent.com/croeder-fhir-to-omop/dqd_docker/main/docker-compose.r4-1.0.0.yml \
   | MATCHBOX_FHIR_CONTEXT_TXSERVER=https://echidna.fhir.org/r4 docker compose -f - up
 ```
 
@@ -309,7 +309,7 @@ The matchbox image is published to Docker Hub under `croeder/matchbox`. Tags ref
 | `croeder/matchbox:main` | [`croeder-fhir-to-omop/fhir-omop-ig`](https://github.com/croeder-fhir-to-omop/fhir-omop-ig) `main` — this organization's fork |
 | `croeder/matchbox:<branch>` | `croeder-fhir-to-omop/fhir-omop-ig` branch `<branch>` |
 
-To run with the upstream HL7 IG (`:latest`), use the [Quick start](#quick-start) commands as written. To run with the fork's main (`:main`), set `MATCHBOX_IMAGE` first:
+These tags apply to the R5/IG 1.0.0 image family (`docker-compose.yml`, the developer default) — [Quick start](#quick-start) uses the R4/IG 1.0.0 image (`croeder/matchbox:r4-1.0.0`) instead. To run the R5 stack with the fork's main (`:main`) rather than upstream HL7 (`:latest`), set `MATCHBOX_IMAGE` first:
 ```bash
 export MATCHBOX_IMAGE=croeder/matchbox:main
 curl -fsSL https://raw.githubusercontent.com/croeder-fhir-to-omop/dqd_docker/main/docker-compose.yml \
@@ -326,9 +326,9 @@ To use a different tag when you have the docker compose file locally, set `MATCH
 | OMOP CDM | 5.4 |
 | HL7 FHIR-to-OMOP IG | 1.0.0 |
 
-The tests here assume FHIR R5. matchbox calls the terminology server via R4 endpoints.
+The developer workflow below (`build.py`) defaults to this R5/IG 1.0.0 stack; the Quick start section above uses the R4/IG 1.0.0 variant (`dqd_docker/docker-compose.r4-1.0.0.yml`) by default. matchbox calls the terminology server via R4 endpoints regardless of which FHIR version it's serving.
 
-A profiles-based compose setup (`dqd_docker/docker-compose.profiles.yml`) exists for running multiple stacks in parallel and switching between FHIR R4 and R5 or between IG versions — see the `dqd_docker` repo for details.
+A profiles-based compose setup (`dqd_docker/docker-compose.profiles.yml`) exists for running multiple stacks in parallel (developer workflow, requires repos cloned side by side) and switching between FHIR R4 and R5 or between IG versions — see the `dqd_docker` repo for details.
 
 ### Vocabularies
 
