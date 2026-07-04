@@ -98,6 +98,24 @@ The port 8088 index links to three reports:
 - **ETL report — sample test fixtures**: results from `matchbox_scripts/sample_fixtures_r5/`, a patient-centric set with four synthetic patients (p1–p4) whose encounters, conditions, observations, and medications cross-reference each other; includes explicit negative cases (files suffixed `_NEG`) and issue-tracked edge cases (files referencing `f2o-xxx` issue numbers)
 - **Unit test report**: results from `matchbox_scripts/tests/test_r5_fml_transforms.py`, a pytest suite that calls matchbox's `$transform` endpoint directly and asserts specific OMOP field values — these are the primary correctness tests for the StructureMap implementations
 
+#### R4 variant
+
+Option A above runs the **R5** stack (IG 1.0.0) by default. An **R4** variant is also available, using the `croeder/matchbox:r4-1.0.0` image and the same fixture set merged into `matchbox_scripts/sample_fixtures_r4/`/`test_files_r4/`:
+
+macOS / Linux / Git Bash:
+```bash
+curl -fsSL https://raw.githubusercontent.com/croeder-fhir-to-omop/dqd_docker/main/docker-compose.r4-1.0.0.yml | docker compose -f - up
+```
+
+PowerShell (Windows 10/11 — note `curl.exe`, not `curl`):
+```powershell
+curl.exe -fsSL https://raw.githubusercontent.com/croeder-fhir-to-omop/dqd_docker/main/docker-compose.r4-1.0.0.yml | docker compose -f - up
+```
+
+This uses the same ports as the default R5 stack (8080, 8081, 3838, 8088), so stop the R5 stack first if it's running (`docker compose down` — omit `-v` to keep the enchilada vocabulary cache). Reports at http://localhost:8088 link to the same three report types, sourced from `matchbox_scripts/test_files_r4/`, `matchbox_scripts/sample_fixtures_r4/`, and `matchbox_scripts/tests/test_r4_fml_transforms.py`.
+
+> **Note:** `fhir-omop-ig` main currently lacks several R4 StructureMap fixes (Encounter.class, Procedure.performed[x], race/ethnicity defaults, id-registry translate()) that exist only on an unmerged development branch, so the R4 unit test report currently shows more failures than the R5 one.
+
 ### Option B — Interactive Jupyter Notebooks
 
 Starts matchbox and a Jupyter notebook server with `transforms.py` pre-installed for hands-on FHIR→OMOP exploration.
@@ -328,7 +346,9 @@ To use a different tag when you have the docker compose file locally, set `MATCH
 
 The tests here assume FHIR R5. matchbox calls the terminology server via R4 endpoints.
 
-A profiles-based compose setup (`dqd_docker/docker-compose.profiles.yml`) exists for running multiple stacks in parallel and switching between FHIR R4 and R5 or between IG versions — see the `dqd_docker` repo for details.
+An R4/IG 1.0.0 variant is available via `dqd_docker/docker-compose.r4-1.0.0.yml` — see the [R4 variant](#r4-variant) under Quick start.
+
+A profiles-based compose setup (`dqd_docker/docker-compose.profiles.yml`) exists for running multiple stacks in parallel (developer workflow, requires repos cloned side by side) and switching between FHIR R4 and R5 or between IG versions — see the `dqd_docker` repo for details.
 
 ### Vocabularies
 
