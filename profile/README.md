@@ -404,6 +404,35 @@ The ConceptMap translations above use HL7 and FHIR-defined code systems (adminis
 
 -  curl -s 'https://echidna.fhir.org/r4/CodeSystem/$lookup?system=http://loinc.org&code=8480-6'
 
+
+## Running with local files
+Following are commands for running the conversion on files local to the installation, instead of those packaged with the Docker images.
+This assumes you have a directory that contains clones of each of the repositories with the addition of another for the vocabularies.
+Run the docker image from within the directory that has the vocabularies in it. Paths here navigate up and back down from there to the variousclones.  The example here assumes a sub folder called local_data. Paths without ".." are within the containers.
+```
+# start the processes, -d to disconnect the terminal for the following/laterc commands
+  CONCEPT_CSV=./CONCEPT.csv \
+  CONCEPT_RELATIONSHIP_CSV=./CONCEPT_RELATIONSHIP.csv \
+  docker compose -f ../dqd_docker/docker-compose.r4-1.0.0.yml up -d
+
+# copy in the local files
+ docker compose -f ../dqd_docker/docker-compose.r4-1.0.0.yml cp ../local_data  dqd:/etl/myfixtures
+
+# convert and load the files
+ docker compose -f ../dqd_docker/docker-compose.r4-1.0.0.yml exec dqd \
+    python3 etl/load_duckdb.py --fixtures-dir /etl/myfixtures --fhir-version r4
+
+# overwrite the name the index actually links to
+  docker compose -f ../dqd_docker/docker-compose.r4-1.0.0.yml exec dqd \
+      mv /omop/etl_report.html /omop/etl_report_sample.html
+
+# regenerate the DQD dashboard from the rebuilt DB
+  docker compose -f ../dqd_docker/docker-compose.r4-1.0.0.yml exec dqd \
+      Rscript /app/run_dqd.R
+```
+
+
+
 ## DISCLAIMER
 
 The IG includes many precautions for dealing with PII in the data. This code makes no guarantee to do so. Do not use it with PII or PHI.
