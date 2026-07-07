@@ -161,9 +161,21 @@ curl -fsSL https://raw.githubusercontent.com/croeder-fhir-to-omop/dqd_docker/mai
   | MATCHBOX_FHIR_CONTEXT_TXSERVER=https://echidna.fhir.org/r4 docker compose -f - up
 ```
 
+PowerShell (Windows 10/11 — note `curl.exe`, not `curl`):
+```powershell
+$env:MATCHBOX_FHIR_CONTEXT_TXSERVER="https://echidna.fhir.org/r4"
+curl.exe -fsSL https://raw.githubusercontent.com/croeder-fhir-to-omop/dqd_docker/main/docker-compose.yml | docker compose -f - up
+```
+
 Or if you have the compose file locally:
 ```bash
 MATCHBOX_FHIR_CONTEXT_TXSERVER=https://echidna.fhir.org/r4 docker compose up
+```
+
+PowerShell:
+```powershell
+$env:MATCHBOX_FHIR_CONTEXT_TXSERVER="https://echidna.fhir.org/r4"
+docker compose up
 ```
 
 Or add a `.env` file alongside your compose file:
