@@ -399,6 +399,11 @@ The ConceptMap translations above use HL7 and FHIR-defined code systems (adminis
 | [dqd_docker](https://github.com/croeder-fhir-to-omop/dqd_docker) | Runs the ETL then serves the OHDSI Data Quality Dashboard against the resulting OMOP CDM |
 | [enchilada](https://github.com/croeder-fhir-to-omop/enchilada) | Local OMOP-backed FHIR terminology server |
 
+
+## EXAMPLES
+
+-  curl -s 'https://echidna.fhir.org/r4/CodeSystem/$lookup?system=http://loinc.org&code=8480-6'
+
 ## DISCLAIMER
 
 The IG includes many precautions for dealing with PII in the data. This code makes no guarantee to do so. Do not use it with PII or PHI.
